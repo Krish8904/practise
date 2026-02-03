@@ -311,7 +311,7 @@ const EditCompany = ({ pageTitle }) => {
   };
 
   return (
-    <div className="p-10 font-poppins bg-white min-h-screen text-left">
+    <div className="p-5 font-poppins bg-white min-h-screen text-left">
 
       <div className="flex justify-between items-center mb-10">
         <div className="flex flex-col text-left">

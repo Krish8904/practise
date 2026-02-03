@@ -258,7 +258,7 @@ const EditHome = ({ pageTitle }) => {
   };
 
   return (
-    <div className="p-10 font-poppins bg-white min-h-screen">
+    <div className="p-5  font-poppins bg-white min-h-screen">
 
       {/* --- HEADER SECTION --- */}
       <div className='flex flex-row justify-between items-center w-full mb-10'>
