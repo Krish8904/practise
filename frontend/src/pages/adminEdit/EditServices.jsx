@@ -131,7 +131,6 @@ const EditService = ({ pageTitle }) => {
   // Cleanup observer
   useEffect(() => {
     return () => {
-
       if (observer.current) observer.current.disconnect();
     };
   }, []);
@@ -142,18 +141,29 @@ const EditService = ({ pageTitle }) => {
     setIsLoadingMore(false);
   }, [sortedData.length]);
 
+  // UPDATED: Properly route to correct editor based on section type
   const handleEditClick = (row) => {
-    setEditingSection(row);
-
     const sectionData = serviceData.sections[row.id];
+    
+    // Define core sections that use the inline modal
+    const coreSections = ['hero', 'services', 'cta'];
+    
+    // Custom sections use NewSectionEditor
+    if (!coreSections.includes(row.id)) {
+      setEditingSection(row);
+      setFormData(null); // Not needed for custom sections
+      return;
+    }
 
+    // Core sections (hero, services, cta) use inline modal
+    setEditingSection(row);
+    
     if (row.id === "services") {
       setFormData(JSON.parse(JSON.stringify(sectionData.items || [])));
     } else {
       setFormData(JSON.parse(JSON.stringify(sectionData || {})));
     }
   };
-
 
   const handleDeleteSection = async (sectionId) => {
     try {
@@ -189,7 +199,6 @@ const EditService = ({ pageTitle }) => {
       alert("Delete failed: " + (err.response?.data?.message || err.message));
     }
   };
-
 
   const addNewService = () => {
     const newCard = { title: "New Service", desc: "Description here", img: "default.jpg", color: "border-blue-600" };
@@ -257,7 +266,7 @@ const EditService = ({ pageTitle }) => {
         <h2 className="text-4xl font-bold text-slate-800">Services</h2>
         <div className="flex gap-2">
           <button>
-            <ExportButton  data={currentRows} fileName="ServicesPage" />
+            <ExportButton data={currentRows} fileName="ServicesPage" />
           </button>
           <button onClick={() => setShowFullPreview(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 cursor-pointer transition-colors font-medium">
             Preview
@@ -441,8 +450,8 @@ const EditService = ({ pageTitle }) => {
         </div>
       )}
 
-      {/* EDIT POPUP */}
-      {editingSection && (
+      {/* CORE SECTIONS EDIT POPUP (hero, services, cta) */}
+      {editingSection && ['hero', 'services', 'cta'].includes(editingSection.id) && (
         <div className="fixed inset-0 bg-black/70 z-500 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-white w-[100%] h-[100%] shadow-2xl flex flex-col overflow-hidden">
             <div className="p-5 border-b flex justify-between items-center bg-gray-50 px-10">
@@ -525,13 +534,13 @@ const EditService = ({ pageTitle }) => {
             <div className="p-6 border-t flex justify-end gap-4 bg-gray-50 px-10">
               <button onClick={() => setEditingSection(null)} className="px-8 py-2 font-bold text-gray-500 cursor-pointer hover:bg-gray-200 rounded-xl transition-all uppercase text-xs">Cancel</button>
               <button onClick={handleSave}
-
                 className="bg-slate-900 text-white px-10 py-2 rounded-xl font-bold shadow-lg cursor-pointer hover:bg-black transition-all uppercase text-xs">Save Changes</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ADD NEW SECTION MODAL */}
       {showAddModal && (
         <AddSection
           pageName="services"
@@ -542,6 +551,7 @@ const EditService = ({ pageTitle }) => {
           }}
         />
       )}
+
       {/* FULL PREVIEW MODAL */}
       {showFullPreview && (
         <div className="fixed inset-0 bg-black/60 z-600 flex items-center justify-center p-6 backdrop-blur-md">
@@ -554,7 +564,6 @@ const EditService = ({ pageTitle }) => {
               <div className="max-w-7xl mx-auto space-y-24 font-poppins text-left">
                 {Object.keys(serviceData.sections || {})
                   .sort((a, b) => getPos(a, serviceData.sections[a]) - getPos(b, serviceData.sections[b]))
-
                   .map((key) => {
                     const s = serviceData.sections[key];
 
@@ -578,7 +587,6 @@ const EditService = ({ pageTitle }) => {
                           <h1 className="text-5xl text-blue-600 font-semibold mb-16">Our Services</h1>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-14 justify-items-center">
                             {(s.items || s).map((card, idx) => (
-
                               <div key={idx} className={`flex flex-col items-center w-full max-w-xl bg-white shadow-md rounded-xl border-l-4 ${card.color}`}>
                                 <div className="p-8 text-center">
                                   <h3 className="text-2xl font-bold mb-3">{card.title}</h3>
@@ -625,7 +633,9 @@ const EditService = ({ pageTitle }) => {
           </div>
         </div>
       )}
-      {editingSection && editingSection.type === "custom" && (
+
+      {/* CUSTOM SECTION EDITOR (NewSectionEditor) */}
+      {editingSection && !['hero', 'services', 'cta'].includes(editingSection.id) && (
         <NewSectionEditor
           section={editingSection}
           pageData={serviceData}

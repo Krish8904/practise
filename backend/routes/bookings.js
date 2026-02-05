@@ -1,5 +1,6 @@
 import express from "express";
 import Booking from "../models/booking.js";
+import addLog from "../utils/addLog.js";
 
 const router = express.Router();
 
@@ -24,6 +25,9 @@ router.post("/", async (req, res) => {
     });
 
     const savedBooking = await newBooking.save();
+
+    await addLog(`New call booking from ${name} (${phone}) on ${date} at ${time}`, "booking");
+
     res.status(201).json(savedBooking);
   } catch (err) {
     console.error("Booking Error:", err);
@@ -47,7 +51,14 @@ router.get("/", async (req, res) => {
 
 // PUT route to update status
 router.put("/:id", async (req, res) => {
-  const updated = await Booking.findByIdAndUpdate(req.params.id, { status: "confirmed" }, { new: true });
+  const updated = await Booking.findByIdAndUpdate(
+    req.params.id,
+    { status: "confirmed" },
+    { new: true }
+  );
+
+  await addLog(`Booking confirmed for ${updated.name}`, "booking");
+
   res.json(updated);
 });
 
@@ -58,11 +69,13 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const deletedBooking = await Booking.findByIdAndDelete(req.params.id);
-    
+
     if (!deletedBooking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-    
+
+    await addLog(`Booking deleted for ${deletedBooking.name}`, "booking");
+
     res.status(200).json({ message: "Booking deleted successfully" });
   } catch (err) {
     console.error("Delete Error:", err);

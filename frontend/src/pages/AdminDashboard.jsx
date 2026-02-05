@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('overview');
   const [pagesExpanded, setPagesExpanded] = useState(false);
   const [activePage, setActivePage] = useState('');
+  const [logs, setLogs] = useState([]);
   const [pageView, setPageView] = useState('list'); // 'list', 'edit-section', 'add-section'
   const [editMode, setEditMode] = useState(false);
   const [pageData, setPageData] = useState({
@@ -67,8 +68,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchStats();
     fetchAllPages();
+    fetchLogs();
   }, []);
-
   useEffect(() => {
     if (activeSection === 'careers') {
       fetchJobs();
@@ -131,7 +132,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const addLogToUI = (newLog) => {
+    setLogs((prev) => [newLog, ...prev.slice(0, 5)]);
+  };
 
+  const fetchLogs = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/logs");
+      setLogs(res.data.slice(0, 6)); // latest 6 logs
+    } catch (err) {
+      console.error("Error fetching logs:", err);
+    }
+  };
 
   const fetchJobs = async () => {
     try {
@@ -465,28 +477,19 @@ export default function AdminDashboard() {
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h3 className="text-lg font-semibold text-slate-800 mb-4">Recent Activity</h3>
+
             <div className="space-y-4">
-              <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">New job application received</p>
-                  <p className="text-xs text-slate-500">Senior Consultant position - 2 hours ago</p>
+              {logs.map((log) => (
+                <div key={log._id} className="flex items-start gap-4 pb-4 border-b border-slate-100">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800">{log.message}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(log.createdAt).toLocaleString()} • {log.type}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">New inquiry from potential client</p>
-                  <p className="text-xs text-slate-500">Digital Transformation services - 5 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">Use case published</p>
-                  <p className="text-xs text-slate-500">Retail Analytics Case Study - Yesterday</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </>

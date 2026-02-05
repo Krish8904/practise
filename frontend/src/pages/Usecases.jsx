@@ -174,7 +174,7 @@ const Usecases = () => {
                   className={`rounded-3xl p-10 border border-gray-200 shadow-lg 
           bg-gradient-to-br from-white to-gray-50 
           hover:shadow-2xl transition-all duration-300
-          ${i % 2 !== 0 ? "order-1 md:order-2" : ""}`}
+                  ${i % 2 !== 0 ? "order-1 md:order-2" : ""}`}
                 >
                   <h4 className="font-bold text-xl mb-6 text-gray-900">
                     Outcome

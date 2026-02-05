@@ -18,6 +18,7 @@ import EditCareer from "./pages/adminEdit/EditCareer";
 import EditHome from "./pages/adminEdit/EditHome";
 import AddSection from "./components/AddSection";
 import NewSectionEditor from "./pages/adminEdit/NewSectionEditor";
+import Logs from "./components/Logs";
 
 function App() {
   const location = useLocation();
@@ -47,6 +48,8 @@ function App() {
 
         <Route path="/admin/createcareer" element={<AddSection />} />
         <Route path="/admin/newsection" element={<NewSectionEditor />} />
+
+        <Route path="/admin/logs" element={<Logs />} />
 
         {/* Dynamic edit pages */}
         <Route path="/admin/home" element={<EditHome />} />

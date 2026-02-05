@@ -6,6 +6,7 @@ import bookings from './routes/bookings.js'
 import careerRoutes from "./routes/careerRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js"; // This now includes GET, POST, and PUT
 import adminRoutes from './routes/adminRoutes.js';
+import logRoutes from "./routes/logRoutes.js";
 
 dotenv.config();
 
@@ -33,6 +34,8 @@ app.use('/api/admin/', adminRoutes);
 
 // Bookings routes
 app.use("/api/bookings", bookings);
+
+app.use("/api/logs", logRoutes);
 
 // MongoDB connection
 mongoose

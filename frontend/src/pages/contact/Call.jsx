@@ -35,10 +35,9 @@ const Call = () => {
       {showSuccess && (
         <div className="fixed top-6 right-6 bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-4">
           <h4 className="font-semibold">✅ Call Booked</h4>
-          <p className="text-sm opacity-90">We’ll contact you at the scheduled time.</p>
+          <p className="text-sm opacity-90">We'll contact you at the scheduled time.</p>
         </div>
       )}
-
       <div className="text-center mb-12">
         <h1 className="text-4xl text-blue-600 font-bold mb-4">Book a Consultation Call</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">Schedule a one-on-one session with our experts.</p>

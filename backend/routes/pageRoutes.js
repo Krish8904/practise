@@ -1,6 +1,7 @@
 // backend/routes/pageRoutes.js
 import express from "express";
 import Page from "../models/page.js";
+import addLog from "../utils/addLog.js";
 
 const router = express.Router();
 
@@ -61,11 +62,11 @@ router.get("/:pageName", async (req, res) => {
   try {
     // We use pageName as the identifier (e.g., "home")
     const page = await Page.findOne({ pageName: req.params.pageName });
-    
+
     if (!page) {
       return res.status(404).json({ message: `Page '${req.params.pageName}' not found` });
     }
-    
+
     res.json(page);
   } catch (err) {
     console.error("Fetch Single Page Error:", err);
@@ -82,27 +83,55 @@ router.put("/:pageName", async (req, res) => {
     const { pageName } = req.params;
     const { sections } = req.body;
 
-    // Validation: Ensure sections object exists in request
     if (!sections) {
       return res.status(400).json({ message: "No sections data provided for update" });
     }
 
-    // Find the page by name and update only the sections field
-    const updatedPage = await Page.findOneAndUpdate(
-      { pageName: pageName },
-      { $set: { sections: sections } }, 
-      { 
-        new: true,           // Return the document AFTER update
-        runValidators: true  // Ensure schema logic is followed
-      }
-    );
+    // Get old page before update
+    const oldPage = await Page.findOne({ pageName });
+    if (!oldPage) {
+      return res.status(404).json({ message: "Page not found" });
+    }
 
-    if (!updatedPage) {
-      return res.status(404).json({ message: "Could not find the page to update" });
+    const oldSections = oldPage.sections || {};
+    const newSections = sections || {};
+
+    // Detect changes
+    const oldKeys = Object.keys(oldSections);
+    const newKeys = Object.keys(newSections);
+
+    // Section Added
+    const added = newKeys.filter(k => !oldKeys.includes(k));
+    // Section Deleted
+    const deleted = oldKeys.filter(k => !newKeys.includes(k));
+    // Section Updated
+    const updated = newKeys.filter(k => oldKeys.includes(k));
+
+    // Update page
+    oldPage.sections = newSections;
+    await oldPage.save();
+
+    // Logging logic
+    if (added.length) {
+      await addLog(
+        `Section added to ${pageName} page`,
+        "section"
+      );
+    } else if (deleted.length) {
+      await addLog(
+        `Section deleted from ${pageName} page`,
+        "section"
+      );
+    } else if (updated.length) {
+      await addLog(
+        `Section updated in ${pageName} page`,
+
+        "section"
+      );
     }
 
     console.log(`✅ ${pageName} page updated successfully`);
-    res.json(updatedPage); 
+    res.json(oldPage);
 
   } catch (err) {
     console.error("Update Page Error:", err);
@@ -146,6 +175,7 @@ router.post("/:pageName/sections", async (req, res) => {
     await page.save();
 
     console.log(`✅ Section '${sectionId}' added to '${pageName}' page`);
+    await addLog(`Added section '${sectionId}' to ${pageName} page`, "section");
     res.status(201).json(page);
 
   } catch (err) {
@@ -183,6 +213,7 @@ router.delete("/:pageName/sections/:sectionId", async (req, res) => {
     await page.save();
 
     console.log(`✅ Section '${sectionId}' deleted from '${pageName}' page`);
+    await addLog(`Deleted section '${sectionId}' from ${pageName} page`, "section");
     res.json({ message: "Section deleted successfully", page });
 
   } catch (err) {
@@ -221,6 +252,7 @@ router.put("/:pageName/sections/:sectionId/position", async (req, res) => {
     await page.save();
 
     console.log(`✅ Section '${sectionId}' position updated to ${position}`);
+    await addLog(`Reordered section '${sectionId}' in ${pageName} page`, "section");
     res.json(page);
 
   } catch (err) {
@@ -260,6 +292,7 @@ router.put("/:pageName/sections/:sectionId/alignment", async (req, res) => {
     await page.save();
 
     console.log(`✅ Section '${sectionId}' alignment updated to ${alignment}`);
+    await addLog(`Changed alignment of section '${sectionId}' in ${pageName} page`, "section");
     res.json(page);
 
   } catch (err) {
