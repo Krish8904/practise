@@ -7,6 +7,7 @@ import EditServices from "./adminEdit/EditServices";
 import EditCompany from "./adminEdit/EditCompany";
 import EditUsecases from './adminEdit/EditUsecases';
 import NewSectionEditor from './adminEdit/NewSectionEditor';
+import ImageManager from './adminEdit/ImageManger';
 
 import { LayoutDashboard, FileText, Briefcase, Users, TrendingUp, Settings, ChevronDown, ChevronRight, Wrench, Building2, MessageSquare, BarChart3, Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign, MoreVertical } from 'lucide-react';
 
@@ -403,6 +404,15 @@ export default function AdminDashboard() {
           <Settings size={20} />
           <span>Settings</span>
         </button>
+        <button
+          onClick={() => setActiveSection('manage')}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeSection === 'manage' ? 'bg-blue-600' : 'hover:bg-slate-800'
+
+            }`}
+        >
+          <Settings size={20} />
+          <span>Manage </span>
+        </button>
       </nav>
 
       <div className="pt-4 border-t border-slate-700">
@@ -771,6 +781,11 @@ export default function AdminDashboard() {
             </div>
           </div>
         );
+
+      case 'manage':
+        return <ImageManager />;
+
+
       default:
         return <OverviewContent />;
     }

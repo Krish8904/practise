@@ -3,8 +3,6 @@ import axios from "axios";
 import NewSectionEditor from "./NewSectionEditor";
 import HomeSr1 from "../HomeSr.jsx/HomeSr1";
 import HomeSr3 from "../HomeSr.jsx/HomeSr3";
-import MainImage from "../../assets/images/main.avif";
-import Second from "../../assets/images/second.avif";
 import AddSection from "../../components/AddSection";
 import ExportButton from "../../components/ExportButton";
 
@@ -625,7 +623,7 @@ const EditHome = ({ pageTitle }) => {
                             ))}
                           </div>
                         </div>
-                        <img src={MainImage} alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
+                        <img  alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
                       </div>
                     );
                   }
@@ -634,7 +632,7 @@ const EditHome = ({ pageTitle }) => {
                     return (
                       <div key={id} className="flex flex-col md:flex-row items-center gap-8">
                         <div className="md:w-1/2">
-                          <img src={Second} alt="Secondary" className="ml-15 h-80 rounded-xl shadow-lg object-cover" />
+                          <img alt="Secondary" className="ml-15 h-80 rounded-xl shadow-lg object-cover" />
                         </div>
                         <div className="md:w-1/2">
                           <h3 className="text-xl font-medium leading-relaxed text-gray-700">

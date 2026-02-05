@@ -7,6 +7,7 @@ import careerRoutes from "./routes/careerRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js"; // This now includes GET, POST, and PUT
 import adminRoutes from './routes/adminRoutes.js';
 import logRoutes from "./routes/logRoutes.js";
+import media from "./routes/media.js";
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ const app = express();
 
 // Middlewares
 app.use(cors());
+
+app.use('/uploads', express.static('uploads'));
 
 // IMPORTANT: Increased limits for large JSON payloads (like Base64 images or long text)
 app.use(express.json({ limit: '50mb' }));
@@ -37,6 +40,7 @@ app.use("/api/bookings", bookings);
 
 app.use("/api/logs", logRoutes);
 
+app.use("/api/images", media);
 // MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)

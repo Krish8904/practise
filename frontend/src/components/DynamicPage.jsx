@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import MainImage from "../assets/images/main.avif";
-import Second from "../assets/images/second.avif";
+
 
 const DynamicPage = () => {
   const { pageName } = useParams();
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const IMG_URL = `${import.meta.env.VITE_API_URL}/uploads/`;
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -42,7 +42,7 @@ const DynamicPage = () => {
   return (
     <div className="min-h-screen bg-white font-poppins">
       <div className="max-w-7xl mx-auto px-4 py-16 space-y-32">
-        
+
         {/* HERO SECTION */}
         {s.hero && (
           <div className="flex flex-col md:flex-row items-center gap-8">
@@ -62,8 +62,8 @@ const DynamicPage = () => {
               <p className="text-gray-700 ml-10 max-w-xl mb-6">{s.hero?.secondaryText}</p>
               <div className="flex ml-10 gap-6">
                 {Array.isArray(s.hero?.buttons) && s.hero.buttons.map((btn, i) => (
-                  <button 
-                    key={i} 
+                  <button
+                    key={i}
                     className={`px-6 py-3 rounded-lg ${i === 0 ? "bg-blue-600 text-white" : "border border-blue-600 text-blue-600"}`}
                   >
                     {btn.label}
@@ -71,7 +71,7 @@ const DynamicPage = () => {
                 ))}
               </div>
             </div>
-            <img src={MainImage} alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
+            <img alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
           </div>
         )}
 
@@ -79,7 +79,7 @@ const DynamicPage = () => {
         {s.intro && (
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="md:w-1/2">
-              <img src={Second} alt="Secondary" className="ml-15 h-80 rounded-xl shadow-lg object-cover" />
+              <img alt="Secondary" className="ml-15 h-80 rounded-xl shadow-lg object-cover" />
             </div>
             <div className="md:w-1/2">
               <h3 className="text-xl font-medium leading-relaxed text-gray-700">

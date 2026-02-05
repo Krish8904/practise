@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import MainImage from "../assets/images/main.avif";
-import Second from "../assets/images/second.avif";
 
 export default function Home() {
   const [homeData, setHomeData] = useState({});
@@ -104,7 +102,7 @@ export default function Home() {
                     ))}
                 </div>
               </div>
-              <img src={MainImage} alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
+              <img  alt="Main" className="h-70 w-250 rounded-xl shadow-lg object-cover" />
             </div>
           );
         }
@@ -114,7 +112,7 @@ export default function Home() {
           return (
             <div key={id} className="flex flex-col md:flex-row items-center gap-8">
               <div className="md:w-1/2">
-                <img src={Second} alt="Secondary" className="ml-10 h-80 rounded-xl shadow-lg object-cover" />
+                <img  alt="Secondary" className="ml-10 h-80 rounded-xl shadow-lg object-cover" />
               </div>
               <div className="md:w-1/2">
                 <h3 className="text-xl font-medium text-left mr-5 leading-relaxed mb-6 text-gray-700">
