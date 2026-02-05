@@ -54,7 +54,9 @@ const EditService = ({ pageTitle }) => {
           section.text ||
           (Array.isArray(cards) ? `${cards.length} Cards` : "Text Content"),
         pos: getPosition(),
-        type: section.type || "core"
+        type: section.type || "core",
+        alignment: section.alignment || "left",
+        isCustom: !['hero', 'services', 'cta'].includes(key) ? "Yes" : "No"
       };
     });
   }, [serviceData.sections]);
@@ -344,6 +346,11 @@ const EditService = ({ pageTitle }) => {
               </div>
             </th>
 
+            {/* ALIGNMENT COLUMN */}
+            <th className="p-4 border border-gray-300 w-32 text-center font-bold">
+              Alignment
+            </th>
+
             {/* ORDER COLUMN */}
             <th
               className="p-4 border border-gray-300 w-24 text-center cursor-pointer hover:bg-gray-200 group"
@@ -375,8 +382,20 @@ const EditService = ({ pageTitle }) => {
               <td className="p-4 border border-gray-300 text-center font-bold text-slate-400">
                 {idx + 1}
               </td>
-              <td className="p-4 border border-gray-300 font-medium whitespace-pre-wrap text-gray-800">{row.primary}</td>
+              <td className="p-4 border border-gray-300 font-medium whitespace-pre-wrap text-gray-800">
+                <div className="flex items-center gap-2">
+                  <span>{row.primary}</span>
+                  {!['hero', 'services', 'cta'].includes(row.id) && (
+                    <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Custom</span>
+                  )}
+                </div>
+              </td>
               <td className="p-4 border border-gray-300 text-gray-500 text-sm">{row.secondary}</td>
+              <td className="p-4 border border-gray-300 text-center">
+                <span className="text-xs font-semibold text-gray-600 capitalize bg-gray-100 px-3 py-1 rounded-full">
+                  {row.alignment || 'left'}
+                </span>
+              </td>
               <td className="p-4 border border-gray-300 text-center font-semibold text-blue-600 bg-blue-50/30">{row.pos}</td>
               <td className="p-4 border border-gray-300 text-center">
                 <button
@@ -391,11 +410,11 @@ const EditService = ({ pageTitle }) => {
             </tr>
           ))}
           {filteredData.length === 0 && (
-            <tr><td colSpan="5" className="p-10 text-center text-gray-400 italic font-medium">No results found matching your filter...</td></tr>
+            <tr><td colSpan="6" className="p-10 text-center text-gray-400 italic font-medium">No results found matching your filter...</td></tr>
           )}
           {isLoadingMore && (
             <tr>
-              <td colSpan="5" style={{ height: "120px" }}>
+              <td colSpan="6" style={{ height: "120px" }}>
                 <div className="flex flex-col justify-center items-center h-full gap-3">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
                   <span className="text-sm text-gray-400 font-medium">Loading more sections...</span>

@@ -124,12 +124,11 @@ const EditUsecases = () => {
   // Intersection Observer for infinite scroll
   const lastRowRef = useCallback((node) => {
     if (observer.current) observer.current.disconnect();
-    if (showAllRows) return; // Don't observe if already showing all
+    if (showAllRows) return;
 
     observer.current = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && !showAllRows) {
         setIsLoadingMore(true);
-        // Simulate loading delay for better UX
         setTimeout(() => {
           setShowAllRows(true);
           setIsLoadingMore(false);
@@ -181,10 +180,9 @@ const EditUsecases = () => {
       setFormData(
         JSON.parse(JSON.stringify(pageData.sections.usecases?.items || []))
       );
-
     } else if (section.isCustom) {
-      // For custom sections, we don't need special handling
-      setFormData(JSON.parse(JSON.stringify(pageData.sections[section.id] || {})));
+      // For custom sections, formData is handled in NewSectionEditor
+      setFormData(null);
     } else {
       setFormData(JSON.parse(JSON.stringify(pageData.sections[section.id] || {})));
     }
@@ -192,38 +190,69 @@ const EditUsecases = () => {
 
   const handleSave = async () => {
     try {
-      const updatedSections = {
-        ...pageData.sections,
-        [editingSection.id]: {
+      let updatedSections = { ...pageData.sections };
+
+      // Handle different section types
+      if (editingSection.id === 'usecases') {
+        updatedSections.usecases = {
           ...pageData.sections.usecases,
           items: formData,
-        },
-      };
+        };
+      } else if (editingSection.isCustom) {
+        // Custom sections are handled by NewSectionEditor
+        // This shouldn't be called for custom sections
+        console.warn("Custom sections should use NewSectionEditor");
+        return;
+      } else {
+        // Hero, CTA, or other core sections
+        updatedSections[editingSection.id] = {
+          ...pageData.sections[editingSection.id],
+          ...formData
+        };
+      }
 
       const finalPayload = { sections: updatedSections };
       await axios.put(`${import.meta.env.VITE_API_URL}/api/pages/${pageName}`, finalPayload);
       await fetchData();
       setEditingSection(null);
-      alert("✅ Usecases updated successfully!");
+      alert("✅ Changes saved successfully!");
     } catch (err) {
       console.error("Save error:", err);
-      alert("❌ Save failed.");
+      alert("❌ Save failed: " + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDeleteSection = async (sectionId) => {
     try {
-      const updatedSections = { ...pageData.sections };
+      // Fetch fresh data
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/pages/${pageName}`);
+      const currentPage = response.data;
+
+      const updatedSections = { ...currentPage.sections };
       delete updatedSections[sectionId];
+
+      // Reset positions
+      const sectionsWithPosition = Object.entries(updatedSections)
+        .filter(([id, section]) => typeof section === 'object' && section.position !== undefined)
+        .map(([id, section]) => ({ id, section }));
+
+      sectionsWithPosition.sort((a, b) => a.section.position - b.section.position);
+
+      sectionsWithPosition.forEach(({ id, section }, index) => {
+        updatedSections[id] = { ...section, position: index + 1 };
+      });
+
       await axios.put(`${import.meta.env.VITE_API_URL}/api/pages/${pageName}`, {
+        ...currentPage,
         sections: updatedSections
       });
+      
       await fetchData();
       setEditingSection(null);
       alert("✅ Section deleted successfully!");
     } catch (err) {
       console.error("Delete error:", err);
-      alert("❌ Delete failed.");
+      alert("❌ Delete failed: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -294,7 +323,7 @@ const EditUsecases = () => {
         <h2 className="text-4xl font-bold text-slate-800">Use Cases</h2>
         <div className="flex justify-end gap-2">
           <button>
-            <ExportButton  data={currentRows} fileName="UseCasesPage" />
+            <ExportButton data={currentRows} fileName="UseCasesPage" />
           </button>
           <button
             onClick={() => setShowFullPreview(true)}
@@ -409,14 +438,20 @@ const EditUsecases = () => {
                 {idx + 1}
               </td>
               <td className="p-3 border border-gray-300 font-medium whitespace-pre-wrap align-top">
-                {row.primary}
-                {row.isCustom && (
-                  <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Custom</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <span>{row.primary}</span>
+                  {row.isCustom && (
+                    <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Custom</span>
+                  )}
+                </div>
               </td>
               <td className="p-3 border border-gray-300 text-gray-600 align-top">{row.secondary}</td>
-              <td className="p-3 border border-gray-300 align-top text-xs font-bold text-gray-400 uppercase text-center">{row.align}</td>
-              <td className="p-3 border border-gray-300 align-top text-center font-semibold text-blue-600">{row.pos}</td>
+              <td className="p-3 border border-gray-300 align-top text-center">
+                <span className="text-xs font-semibold text-gray-600 capitalize bg-gray-100 px-3 py-1 rounded-full">
+                  {row.align || 'left'}
+                </span>
+              </td>
+              <td className="p-3 border border-gray-300 align-top text-center font-semibold text-blue-600 bg-blue-50/30">{row.pos}</td>
               <td className="p-3 border border-gray-300 align-top text-center">
                 <button onClick={() => handleEditClick(row)} className="text-blue-500 hover:text-white p-2 border border-blue-100 rounded-2xl hover:bg-blue-600 transition-all shadow-sm cursor-pointer">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -530,7 +565,6 @@ const EditUsecases = () => {
 
                 if (id === 'usecases') {
                   return s.usecases?.items?.map((uc, i) => (
-
                     <section key={`usecase-${i}`} className={`py-20 ${i % 2 !== 0 ? "bg-gray-50" : "bg-white"}`}>
                       <div className={`max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center ${i % 2 !== 0 ? "md:flex-row-reverse" : ""}`}>
                         <div className={i % 2 !== 0 ? "order-1 md:order-2" : ""}>
@@ -590,16 +624,17 @@ const EditUsecases = () => {
           <NewSectionEditor
             section={editingSection}
             pageData={pageData}
+            pageName={pageName}
             onClose={() => setEditingSection(null)}
             onRefresh={fetchData}
             onDelete={handleDeleteSection}
           />
         ) : (
-          <div className="fixed inset-0 bg-black/70 z-500 flex items-center justify-center  backdrop-blur-sm">
+          <div className="fixed inset-0 bg-black/70 z-500 flex items-center justify-center backdrop-blur-sm">
             <div className="bg-white w-[100%] h-[100%] shadow-2xl flex flex-col overflow-hidden">
               <div className="p-5 border-b flex justify-between items-center bg-gray-50 px-10">
                 <span className="font-bold text-gray-700 uppercase tracking-widest text-sm">Editing: {editingSection.name}</span>
-                <button onClick={() => setEditingSection(null)} className="text-gray-400 hover:text-red-500 text-4xl leading-none">&times;</button>
+                <button onClick={() => setEditingSection(null)} className="text-gray-400 hover:text-red-500 text-4xl leading-none cursor-pointer">&times;</button>
               </div>
               <div className="flex-1 overflow-y-auto p-10 bg-white">
                 <div className="max-w-6xl mx-auto space-y-8 font-poppins text-left">
@@ -666,8 +701,8 @@ const EditUsecases = () => {
                 </div>
               </div>
               <div className="p-6 border-t flex justify-end gap-4 bg-gray-50 px-10">
-                <button onClick={() => setEditingSection(null)} className="px-8 py-2 font-bold text-gray-500 hover:bg-gray-200 rounded-xl transition-all">Cancel</button>
-                <button onClick={handleSave} className="bg-blue-600 text-white px-10 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all">Save Changes</button>
+                <button onClick={() => setEditingSection(null)} className="px-8 py-2 font-bold text-gray-500 hover:bg-gray-200 rounded-xl transition-all cursor-pointer">Cancel</button>
+                <button onClick={handleSave} className="bg-blue-600 text-white px-10 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all cursor-pointer">Save Changes</button>
               </div>
             </div>
           </div>
