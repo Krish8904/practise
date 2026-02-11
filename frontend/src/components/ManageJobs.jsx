@@ -53,10 +53,20 @@ export default function ManageJobs() {
   const handleSave = async (updatedCategories) => {
     try {
       const res = await axios.get(`${API}/api/pages/career`);
-      const fullPage = res.data;
-      fullPage.sections.jobCategoriesSection.jobCategories =
-        updatedCategories;
-      await axios.put(`${API}/api/pages/career`, fullPage);
+      const current = res.data;
+
+      const updatedSections = {
+        ...current.sections,
+        jobCategoriesSection: {
+          ...current.sections.jobCategoriesSection,
+          jobCategories: updatedCategories,
+        },
+      };
+
+      await axios.put(`${API}/api/pages/career`, {
+        sections: updatedSections,
+      });
+
       setCategories(updatedCategories);
     } catch (err) {
       console.error(err);
@@ -125,10 +135,10 @@ export default function ManageJobs() {
           </div>
           <div>
             <h2 className="text-3xl font-bold text-slate-800">
-              Career Openings Manager
+              Manage Career Openings
             </h2>
             <p className="text-gray-500 pt-2">
-              Manage departments and job listings shown on your website
+              Manage departments and job listings shown on your website :
             </p>
           </div>
         </div>
@@ -172,7 +182,7 @@ export default function ManageJobs() {
               <input
                 value={cat.category}
                 onChange={(e) => updateCatName(catIndex, e.target.value)}
-                className="text-2xl font-semibold outline-none focus:text-blue-600 bg-transparent"
+                className="text-2xl font-semibold outline-none focus:text-blue-600 bg-transparent  h-10 leading-loose"
               />
             </div>
 

@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MapPin, Clock } from "lucide-react";
+import Apply from "./Apply";
+
 
 const Career = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showApplication, setShowApplication] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -174,7 +180,7 @@ const Career = () => {
                     <div className="relative bg-white rounded-3xl p-8 overflow-hidden">
 
                       {/* floating glow */}
-                      <div className="absolute -top-16 -right-16 w-56 h-56 bg-blue-100 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition" />
+                      <div className="absolute -top-16 -right-16 w-56 h-56 bg-blue-100 rounded-full blur-3xl opacity-30 group-hover:opacity-30 transition" />
 
                       {/* header */}
                       <div className="flex justify-between items-start mb-6">
@@ -198,12 +204,11 @@ const Career = () => {
 
                         {/* arrow indicator */}
                         <div className="translate-x-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
-                          
                         </div>
                       </div>
 
                       {/* separator */}
-                      <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-6" />
+                      <div className="h-px bg-linear-to-r from-transparent via-slate-200 to-transparent mb-6" />
 
                       {/* description */}
                       <p className="text-slate-600 leading-relaxed line-clamp-4 mb-8">
@@ -211,11 +216,12 @@ const Career = () => {
                       </p>
 
                       {/* CTA */}
-                      <button className="relative text-sm font-semibold text-blue-700 group/btn">
-                        Apply 
-                        <span className="ml-2 inline-block transition-transform group-hover/btn:translate-x-1">
-                          →
-                        </span>
+                      <button
+                        onClick={() => navigate(`/career/applyforjobs?job=${encodeURIComponent(job.title)}`)}
+                        className="relative text-sm font-semibold text-blue-700 group/btn"
+                      >
+                        Apply
+                        <span className="ml-2 inline-block transition-transform group-hover/btn:translate-x-1">→</span>
                         <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-blue-600 group-hover/btn:w-full transition-all duration-300" />
                       </button>
 

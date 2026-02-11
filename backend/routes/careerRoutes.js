@@ -1,7 +1,17 @@
+import multer from "multer";
+import Application from "../models/Application.js";
 import express from "express";
 import Page from "../models/page.js";
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname),
+});
+
+const upload = multer({ storage });
 
 // 1. GET Career Page Data
 router.get("/", async (req, res) => {
@@ -40,7 +50,7 @@ router.post("/job", async (req, res) => {
     }
 
     // Since it's a Mixed type, we must tell Mongoose the data changed
-    page.markModified('sections'); 
+    page.markModified('sections');
     await page.save();
     res.status(201).json(page);
   } catch (err) {
@@ -79,6 +89,23 @@ router.delete("/job/:catIndex/:jobIndex", async (req, res) => {
     res.json({ message: "Job deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.post("/apply", upload.single("resume"), async (req, res) => {
+  try {
+    const newApp = new Application({
+      ...req.body,
+      resumePath: req.file ? req.file.path : null,
+    });
+
+    await newApp.save();
+
+    res.json({ message: "Thanks for applying , we'll contact you shortly." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save application" });
   }
 });
 

@@ -1,24 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
+  const captchaRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Hardcoded credentials
-    if (formData.email === "admin@example.com" && formData.password === "admin123") {
-      // Redirect to dashboard
-      navigate("/admin");
-    } else {
-      alert("Invalid credentials");
+    console.log("🔵 Form submitted!");
+    console.log("🔵 Email:", formData.email);
+    console.log("🔵 Password:", formData.password);
+
+    const token = captchaRef.current.getValue();
+    console.log("🔵 Captcha token:", token);
+    console.log("🔵 Token length:", token?.length);
+
+    if (!token) {
+      console.error("❌ No captcha token!");
+      alert("Please verify captcha");
+      return;
     }
+
+    console.log("🔵 About to send fetch request...");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          captchaToken: token,
+        }),
+      });
+
+      console.log("🔵 Fetch completed! Status:", res.status);
+
+      const data = await res.json();
+      console.log("🔵 Response data:", data);
+
+      if (res.ok) {
+        console.log("✅ Login successful!");
+        navigate("/admin");
+      } else {
+        console.error("❌ Login failed:", data.message);
+        alert(data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("🔥 Fetch error:", err);
+      alert("Server error: " + err.message);
+    }
+
+    captchaRef.current.reset();
   };
 
   return (
@@ -76,6 +116,14 @@ const AdminLogin = () => {
               onChange={handleChange}
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
+            />
+          </div>
+
+          {/* CAPTCHA */}
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              sitekey="6LcKkWcsAAAAAMewdhYKJElKUj0Jgy4ysdjvJBGr"
+              ref={captchaRef}
             />
           </div>
 

@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { ImagePlus } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from "lucide-react";
+
 
 const ImageManager = () => {
+  const navigate = useNavigate();
   const [pages, setPages] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +23,7 @@ const ImageManager = () => {
       isFetchingRef.current = true;
       setLoading(true);
       setError(null);
-      
+
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/pages`);
       setPages(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
@@ -32,7 +37,7 @@ const ImageManager = () => {
 
   useEffect(() => {
     if (hasInitializedRef.current) return;
-    
+
     hasInitializedRef.current = true;
     fetchPages();
   }, []);
@@ -63,7 +68,7 @@ const ImageManager = () => {
     if (!value) return "";
     const base = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
     const path = value.includes("/") ? value : `/uploads/${value}`;
-    
+
     // Use tracked timestamp if available, otherwise use current time
     const timestamp = imageTimestamps[value] || Date.now();
     return `${base}${path}?t=${timestamp}`;
@@ -83,35 +88,35 @@ const ImageManager = () => {
 
       for (let i = 0; i < pathParts.length - 1; i++) {
         const part = pathParts[i];
-        
+
         if (part.includes("[")) {
           const key = part.substring(0, part.indexOf("["));
           const indexMatch = part.match(/\[(\d+)\]/);
-          
+
           if (!indexMatch) {
             throw new Error(`Invalid array path: ${part}`);
           }
-          
+
           const index = parseInt(indexMatch[1]);
-          
+
           if (!current[key]) {
             throw new Error(`Key not found: ${key}`);
           }
-          
+
           if (!Array.isArray(current[key])) {
             throw new Error(`Expected array at ${key}, got ${typeof current[key]}`);
           }
-          
+
           if (index >= current[key].length) {
             throw new Error(`Index ${index} out of bounds for ${key}`);
           }
-          
+
           current = current[key][index];
         } else {
           if (!current[part]) {
             throw new Error(`Key not found: ${part}`);
           }
-          
+
           current = current[part];
         }
       }
@@ -130,7 +135,7 @@ const ImageManager = () => {
       if (!isFetchingRef.current) {
         await fetchPages();
       }
-      
+
       setSelected(null);
       alert("Image updated successfully!");
     } catch (err) {
@@ -144,11 +149,11 @@ const ImageManager = () => {
     try {
       const fileName = imgValue.split("/").pop();
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/images/delete/${fileName}`);
-      
+
       if (!isFetchingRef.current) {
         await fetchPages();
       }
-      
+
       alert("Image deleted successfully!");
     } catch (err) {
       console.error("Failed to delete image:", err);
@@ -162,7 +167,7 @@ const ImageManager = () => {
 
     const formData = new FormData();
     formData.append("image", file);
-    
+
     const oldFileName = selected.oldPath.split("/").pop();
     formData.append("oldFileName", oldFileName);
 
@@ -174,13 +179,13 @@ const ImageManager = () => {
       );
 
       const newFilePath = uploadRes.data.filePath || uploadRes.data.path;
-      
+
       if (!newFilePath) {
         throw new Error("Backend didn't return the new file path");
       }
 
       await updateImage(selected.page, selected.path, newFilePath);
-      
+
       setSelected(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
@@ -192,7 +197,7 @@ const ImageManager = () => {
   if (loading) {
     return (
       <div className="p-6">
-        <h1 className="text-3xl font-bold text-blue-600 mb-5">Media Management</h1>
+        <h1 className="text-3xl font-bold text-blue-600  mb-5">Media Management</h1>
         <div className="bg-white p-12 rounded-xl shadow-sm border border-slate-200 text-center">
           <p className="text-slate-600">Loading images...</p>
         </div>
@@ -207,7 +212,7 @@ const ImageManager = () => {
         <div className="bg-red-50 p-12 rounded-xl shadow-sm border border-red-200 text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <p className="text-sm text-slate-600">API URL: {import.meta.env.VITE_API_URL || 'Not configured'}</p>
-          <button 
+          <button
             onClick={() => {
               if (!isFetchingRef.current) {
                 fetchPages();
@@ -226,10 +231,29 @@ const ImageManager = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 pt-0 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8 ">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Media Management</h1>
-          <hr className="text-blue-500" />
+      <div className="w-full mx-auto">
+        <div className="flex items-center w-full justify-between bg-white/80  p-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 p-4 rounded-2xl shadow-inner">
+              <ImagePlus className="text-blue-600" size={28} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-slate-800">
+                Media Management
+              </h2>
+              <p className="text-gray-500 pt-2">
+                Update & Manage media across your website :
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate("/admin")}
+            className="flex items-center gap-2 border px-6 py-3 rounded-xl cursor-pointer hover:bg-slate-50 shadow-sm"
+          >
+            <ArrowLeft size={18} />
+            Dashboard
+          </button>
         </div>
 
         {filteredPages.map((page) => {
@@ -239,29 +263,29 @@ const ImageManager = () => {
           return (
             <div key={page.pageName} className="mb-12">
               <div className="flex items-center mt-8 gap-3 mb-6">
-                <div className="h-1 w-8 bg-blue-600 rounded-full"></div>
-                <h2 className="text-2xl font-bold text-slate-800 capitalize">
+                <div className="h-1 w-8 bg-blue-600 rounded-full mb-3"></div>
+                <h2 className="text-2xl font-bold mb-3 text-slate-800 capitalize">
                   {page.pageName} Page
                 </h2>
-                <span className="text-sm text-slate-500 bg-slate-200 px-3 py-1 rounded-full">
+                <span className="text-sm text-slate-500 bg-slate-200 px-3 py-1 mb-3 rounded-full">
                   {images.length} {images.length === 1 ? 'image' : 'images'}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {images.map((img, i) => (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
                   >
                     <div className="relative aspect-video bg-slate-100 overflow-hidden">
                       <img
                         src={getImageUrl(img.value)}
-                        className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
                         alt=""
                         onError={(e) => (e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found")}
                       />
-                      
+
                       <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute bottom-3 left-3 right-3">
                           <p className="text-white text-xs font-medium truncate">
@@ -315,6 +339,7 @@ const ImageManager = () => {
       </div>
 
       <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+
     </div>
   );
 };

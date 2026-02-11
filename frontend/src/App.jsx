@@ -20,6 +20,8 @@ import AddSection from "./components/AddSection";
 import NewSectionEditor from "./pages/adminEdit/NewSectionEditor";
 import ManageJobs from "./components/ManageJobs";
 import Logs from "./components/Logs";
+import ImageManager from "./pages/adminEdit/ImageManager";
+import Apply from "./pages/Apply";
 
 function App() {
   const location = useLocation();
@@ -37,6 +39,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/career" element={<Career />} />
+        <Route path="/career/applyforjobs" element={<Apply />} />
         <Route path="/company" element={<Company />} />
         <Route path="/services" element={<Services />} />
         <Route path="/usecases" element={<Usecases />} />
@@ -53,6 +56,8 @@ function App() {
         <Route path="/admin/logs" element={<Logs />} />
 
         <Route path="/admin/manage-jobs" element={<ManageJobs />} />
+        <Route path="/admin/manage-media" element={<ImageManager />} />
+
 
         {/* Dynamic edit pages */}
         <Route path="/admin/home" element={<EditHome />} />

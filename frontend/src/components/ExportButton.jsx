@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType } from "docx";
 import { saveAs } from "file-saver";
 
+
 const ExportButton = ({ data, fileName = "ExportData" }) => {
 
   const handleExport = async (format) => {
@@ -27,13 +28,51 @@ const ExportButton = ({ data, fileName = "ExportData" }) => {
     // ✅ PDF (UNCHANGED STYLE)
     if (format === "pdf") {
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      const logoBase64 = "/newlogo.png"; // public folder image
+
+      const header = () => {
+        // Logo left
+        doc.addImage(logoBase64, "WEBP", 6, 4, 40, 30);
+
+        // Company name right
+        doc.setFontSize(20);
+        doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.text("SubDuxion", pageWidth - 14, 21, { align: "right" });
+
+      };
+
+      const footer = (pageNumber, totalPages) => {
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.setFont("helvetica", "normal");
+
+        // Bottom left: exact export timestamp
+        const exportTime = new Date();
+        const formattedTime = `${exportTime.getDate().toString().padStart(2, "0")}-${(exportTime.getMonth() + 1).toString().padStart(2, "0")}-${exportTime.getFullYear()} ${exportTime.getHours().toString().padStart(2, "0")}:${exportTime.getMinutes().toString().padStart(2, "0")}:${exportTime.getSeconds().toString().padStart(2, "0")}`;
+        doc.text(`Exported on ${formattedTime}`, 9, pageHeight - 10);
+
+        // Bottom right: page numbers
+        doc.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: "right" });
+      };
 
       autoTable(doc, {
         head: [headers],
         body: rows,
-        startY: 15,
-        styles: { fontSize: 10, cellPadding: 3 },
+        startY: 35, // table below header
+        styles: { fontSize: 10, cellPadding: 3, font: "helvetica" },
+        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: "bold", font: "helvetica" },
+        didDrawPage: (data) => {
+          const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+          const totalPages = doc.internal.getNumberOfPages();
+          header();
+          footer(pageNumber, totalPages);
+        },
       });
+
       doc.save(`${fileName}.pdf`);
     }
 

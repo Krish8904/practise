@@ -77,7 +77,12 @@ const Services = () => {
                       >
                         <div className="w-full h-70 bg-gray-100 rounded-2xl mb-6 overflow-hidden">
                           <img
-                              src={`${import.meta.env.VITE_API_URL}${item.image.startsWith('/') ? '' : '/uploads/'}${item.image}`}
+                            src={
+                              item.image
+                                ? `${import.meta.env.VITE_API_URL}${item.image.startsWith("/") ? "" : "/uploads/"
+                                }${item.image}`
+                                : "/placeholder.png"
+                            }
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
@@ -109,7 +114,7 @@ const Services = () => {
           // --- CTA ---
           if (key === "cta") {
             return (
-              <section key={key} className="max-w-7xl mx-auto px-6 py-24">
+              <section key={key} className="max-w-7xl mx-auto px-6 py-10 pb-10">
                 <div className="bg-blue-50 rounded-[1rem]  p-12 md:p-20 text-center relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[100px]"></div>
                   <div className="relative z-10">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CallInquiries from '../components/Callinquiries';
 import EditCareer from './adminEdit/EditCareer';
@@ -9,9 +9,8 @@ import EditCompany from "./adminEdit/EditCompany";
 import EditUsecases from './adminEdit/EditUsecases';
 import NewSectionEditor from './adminEdit/NewSectionEditor';
 import ManageJobs from '../components/ManageJobs';
-import ImageManager from './adminEdit/ImageManger';   
+import ImageManager from './adminEdit/ImageManager';
 import { ImagePlus } from 'lucide-react';
-
 import { LayoutDashboard, FileText, Briefcase, Users, TrendingUp, Settings, ChevronDown, ChevronRight, Wrench, Building2, MessageSquare, BarChart3, Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign, MoreVertical } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -21,7 +20,7 @@ export default function AdminDashboard() {
   const [pagesExpanded, setPagesExpanded] = useState(false);
   const [activePage, setActivePage] = useState('');
   const [logs, setLogs] = useState([]);
-  const [pageView, setPageView] = useState('list'); // 'list', 'edit-section', 'add-section'
+  const [pageView, setPageView] = useState('list'); 
   const [editMode, setEditMode] = useState(false);
   const [pageData, setPageData] = useState({
     title: '',
@@ -41,21 +40,6 @@ export default function AdminDashboard() {
     totalVisitors: 0,
     activeLeads: 0
   });
-
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
 
   // Career management state
   const [jobs, setJobs] = useState([]);
@@ -410,7 +394,7 @@ export default function AdminDashboard() {
           <span>Settings</span>
         </button>
         <button
-          onClick={() => setActiveSection('manage')}
+          onClick={() => navigate('/admin/manage-media')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeSection === 'manage' ? 'bg-blue-600' : 'hover:bg-slate-800'
             }`}
         >
@@ -455,7 +439,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <h3 className="text-4xl font-bold text-blue-600 ml-3 mb-1">{stats.openRoles}</h3>
-              <p className="text-sm text-slate-600">Open Roles</p>
+              <p className="text-sm text-slate-600">Open <span className='text-blue-600'>Roles</span> </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -465,7 +449,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <h3 className="text-4xl font-bold text-purple-600 ml-3 mb-1">{stats.services}</h3>
-              <p className="text-sm text-slate-600">Total Services</p>
+              <p className="text-sm text-slate-600">Total <span className='text-purple-600'>Services</span></p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -475,7 +459,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <h3 className="text-4xl font-bold text-orange-500 ml-3 mb-1">{stats.useCases}</h3>
-              <p className="text-sm text-slate-600">Use Cases</p>
+              <p className="text-sm text-slate-600">Total <span className='text-orange-500'>Use Cases</span></p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -485,7 +469,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <h3 className="text-4xl font-bold text-green-600 ml-3 mb-1">{allPages.length}</h3>
-              <p className="text-sm text-slate-600">Total Pages</p>
+              <p className="text-sm text-slate-600">Total <span className='text-green-600'>Pages</span></p>
             </div>
           </div>
 
@@ -785,10 +769,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         );
-
-      case 'manage':
-        return <ImageManager />;
-
 
       default:
         return <OverviewContent />;
