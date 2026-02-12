@@ -4,12 +4,18 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bookings from './routes/bookings.js'
 import careerRoutes from "./routes/careerRoutes.js";
-import pageRoutes from "./routes/pageRoutes.js"; // This now includes GET, POST, and PUT
+import pageRoutes from "./routes/pageRoutes.js";
 import adminRoutes from './routes/adminRoutes.js';
 import logRoutes from "./routes/logRoutes.js";
 import media from "./routes/media.js";
+import nodemailer from "nodemailer";
 
 dotenv.config();
+
+console.log("\n ENVIRONMENT VARIABLES CHECK:");
+console.log("EMAIL_USER:", process.env.EMAIL_USER || "❌ UNDEFINED");
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? `✅ SET (${process.env.EMAIL_PASS.length} chars)` : "❌ UNDEFINED");
+console.log("MONGO_URI:", process.env.MONGO_URI ? "✅ SET" : "❌ UNDEFINED");
 
 const app = express();
 
@@ -21,7 +27,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// REQUEST LOGGER - ADD THIS
+// REQUEST LOGGER
 app.use((req, res, next) => {
   console.log(`\n INCOMING REQUEST: ${req.method} ${req.url}`);
   console.log("Body:", req.body);
@@ -45,6 +51,7 @@ app.use("/api/bookings", bookings);
 app.use("/api/logs", logRoutes);
 
 app.use("/api/images", media);
+
 // MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)

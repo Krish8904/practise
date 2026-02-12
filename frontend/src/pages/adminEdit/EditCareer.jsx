@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
+import { MapPin, Clock } from "lucide-react";
 import AddSection from "../../components/AddSection";
 import NewSectionEditor from "./NewSectionEditor";
 import ExportButton from "../../components/ExportButton";
@@ -80,7 +81,7 @@ const EditCareer = ({ pageTitle }) => {
 
     // Add custom sections
     Object.keys(s).forEach(key => {
-      if (!['hero', 'whyWorkWithUs', 'jobCategories', 'benefits', 'contactCTA'].includes(key)) {
+      if (!['hero', 'whyWorkWithUs', 'jobCategories', 'jobCategoriesSection', 'benefits', 'contactCTA'].includes(key)) {
         const section = s[key];
         if (section && section.type === "custom") {
           baseData.push({
@@ -168,11 +169,12 @@ const EditCareer = ({ pageTitle }) => {
   useEffect(() => {
     fetchData();
     let interval;
-    if (!editingSection && !showFilterModal && !showAddSection) {
-      interval = setInterval(fetchData, 5000);
+    if (!editingSection && !showFilterModal && !showAddSection && showFullPreview) {
+      // Poll for updates while preview is open
+      interval = setInterval(fetchData, 2000);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [editingSection, showFilterModal, showAddSection, fetchData]);
+  }, [editingSection, showFilterModal, showAddSection, showFullPreview, fetchData]);
 
   // Cleanup observer
   useEffect(() => {
@@ -212,7 +214,6 @@ const EditCareer = ({ pageTitle }) => {
 
   const handleDeleteSection = async (sectionId) => {
     try {
-      // HARDCODED for career page - no pageName needed
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/pages/career`);
       const currentPage = response.data;
 
@@ -251,20 +252,20 @@ const EditCareer = ({ pageTitle }) => {
   const totalPages = Math.ceil(sortedData.length / rowsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Get alignment style for preview
-  const getAlignmentStyle = (align) => {
+  // Get alignment style for preview - EXACTLY MATCHING Career.jsx
+  const getAlignmentClass = (align) => {
     const alignLower = (align || "center").toLowerCase();
     if (alignLower === "center") return "text-center";
     if (alignLower === "right") return "text-right";
     return "text-left";
   };
 
-  // Render custom section in preview
+  // Render custom section in preview - EXACTLY MATCHING Career.jsx
   const renderCustomSection = (sectionId) => {
     const section = s[sectionId];
     if (!section) return null;
 
-    const alignClass = getAlignmentStyle(section.alignment);
+    const alignClass = getAlignmentClass(section.alignment);
 
     return (
       <div key={sectionId} className={`bg-linear-to-r from-blue-50 to-white p-10 rounded-xl space-y-4 shadow-md ${alignClass}`}>
@@ -276,19 +277,71 @@ const EditCareer = ({ pageTitle }) => {
     );
   };
 
-  // Get sorted sections for preview
+  // Get sorted sections for preview - EXACTLY MATCHING Career.jsx
   const getSortedSections = () => {
     const allSections = [];
 
+    // Add hero
+    if (s.hero) {
+      allSections.push({
+        id: 'hero',
+        position: s.hero.position || 1,
+        type: 'hero',
+        data: s.hero
+      });
+    }
+
+    // Add whyWorkWithUs
+    if (s.whyWorkWithUs) {
+      allSections.push({
+        id: 'whyWorkWithUs',
+        position: s.whyWorkWithUs.position || 2,
+        type: 'whyWorkWithUs',
+        data: s.whyWorkWithUs
+      });
+    }
+
+    if (s.jobCategoriesSection) {
+      allSections.push({
+        id: 'jobCategories',
+        position: s.jobCategoriesSection.position || 3,
+        type: 'jobCategories',
+        data: s.jobCategoriesSection.jobCategories
+      });
+    }
+
+    // Add benefits
+    if (s.benefits) {
+      allSections.push({
+        id: 'benefits',
+        position: s.benefits.position || 4,
+        type: 'benefits',
+        data: s.benefits
+      });
+    }
+
+    // Add contactCTA
+    if (s.contactCTA) {
+      allSections.push({
+        id: 'contactCTA',
+        position: s.contactCTA.position || 5,
+        type: 'contactCTA',
+        data: s.contactCTA
+      });
+    }
+
+    // Add custom sections
     Object.keys(s).forEach(key => {
-      const section = s[key];
-      if (section && typeof section === 'object') {
-        allSections.push({
-          id: key,
-          position: section.position || 999,
-          data: section,
-          isCustom: section.type === "custom"
-        });
+      if (!['hero', 'whyWorkWithUs', 'jobCategories', 'jobCategoriesSection', 'benefits', 'contactCTA'].includes(key)) {
+        const section = s[key];
+        if (section && section.type === "custom") {
+          allSections.push({
+            id: key,
+            position: section.position || 999,
+            type: 'custom',
+            data: section
+          });
+        }
       }
     });
 
@@ -325,7 +378,6 @@ const EditCareer = ({ pageTitle }) => {
             onClose={() => setEditingSection(null)}
             onSave={(content) => handleSave(editingSection.id, content)}
           />
-
         )}
       </div>
     );
@@ -551,62 +603,114 @@ const EditCareer = ({ pageTitle }) => {
         </div>
       )}
 
-      {/* HIGH FIDELITY PREVIEW MODAL */}
+      {/* HIGH FIDELITY PREVIEW MODAL - EXACTLY MATCHING Career.jsx */}
       {showFullPreview && (
         <div className="fixed inset-0 bg-slate-950/80 z-20000 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white w-full h-full max-w-400 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white w-full h-full max-w-7xl rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50 px-10">
               <div className="flex items-center gap-4">
                 <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Live Career Preview</span>
+                <span className="text-xs text-gray-400">Updates automatically</span>
               </div>
               <button onClick={() => setShowFullPreview(false)} className="bg-white border border-gray-200 text-gray-400 hover:text-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm">&times;</button>
             </div>
 
             <div className="flex-1 overflow-y-auto bg-white">
-              <div className="max-w-7xl mt-20 mx-auto px-6 py-16 font-satoshi space-y-20 text-left">
+              {/* EXACT COPY OF Career.jsx CONTENT */}
+              <div className="max-w-7xl mt-20 mx-auto px-6 py-16 font-satoshi space-y-20">
                 {getSortedSections().map((section) => {
-                  const { id, data, isCustom } = section;
+                  const { id, type, data } = section;
 
-                  // Render custom sections
-                  if (isCustom) {
-                    return renderCustomSection(id);
-                  }
-
-                  // Render built-in sections
-                  if (id === 'hero') {
+                  // Render Hero
+                  if (type === 'hero') {
                     return (
                       <div key={id} className="text-center">
-                        <h1 className="text-5xl font-bold mb-4 text-gray-900">{data.mainText}</h1>
-                        <p className="text-xl text-gray-700 max-w-3xl mx-auto">{data.secondaryText}</p>
+                        <h1 className="text-5xl font-bold mb-4 text-gray-900">
+                          {data.mainText || "Join Our Team at SubDuxion"}
+                        </h1>
+                        <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+                          {data.secondaryText || "At SubDuxion, we empower businesses with applied AI, strategy, and engineering expertise."}
+                        </p>
                       </div>
                     );
                   }
 
-                  if (id === 'whyWorkWithUs') {
+                  // Render Why Work With Us
+                  if (type === 'whyWorkWithUs') {
                     return (
-                      <div key={id} className="bg-linear-to-r from-blue-50 to-white p-10 rounded-xl space-y-4 text-center shadow-md border border-blue-50">
+                      <div key={id} className="bg-linear-to-r from-blue-50 to-white p-10 rounded-xl space-y-4 text-center shadow-md">
                         <h2 className="text-3xl font-bold mb-2 text-gray-900">{data.title}</h2>
                         <p className="text-gray-700 max-w-2xl mx-auto">{data.text}</p>
                         <ul className="list-disc list-inside text-gray-700 mt-4 max-w-2xl mx-auto space-y-2">
-                          {data.bullets?.map((b, i) => <li key={i}>{b}</li>)}
+                          {data.bullets?.map((b, i) => (
+                            <li key={i}>{b}</li>
+                          ))}
                         </ul>
                       </div>
                     );
                   }
 
-                  if (id === 'jobCategories') {
-                    const jobData = s.jobCategoriesSection?.jobCategories || [];
-                    return jobData.map((cat, catIndex) => (
+                  // Render Job Categories
+                  if (type === 'jobCategories') {
+                    return data.map((cat, catIndex) => (
                       <div key={`${id}-${catIndex}`} className="space-y-6">
-                        <h2 className="text-4xl font-bold border-b-2 border-gray-300 pb-2 text-gray-900">{cat.category}</h2>
+                        <h2 className="text-4xl font-bold border-b-2 border-gray-300 pb-2 text-gray-900">
+                          {cat.category}
+                        </h2>
                         <div className="grid gap-8 md:grid-cols-2">
-                          {cat.jobs?.map((job, j) => (
-                            <div key={j} className="border-l-4 border-blue-600 bg-white rounded-xl p-6 hover:shadow-lg transition-all transform hover:-translate-y-1">
-                              <h3 className="text-2xl font-semibold mb-2 text-gray-900">{job.title}</h3>
-                              <p className="text-gray-500 mb-1"><span className="font-medium text-slate-800">Location:</span> {job.location}</p>
-                              <p className="text-gray-500 mb-4"><span className="font-medium text-slate-800">Type:</span> {job.type}</p>
-                              <p className="mb-4 text-gray-700 leading-relaxed">{job.description}</p>
-                              <button className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-md shadow-blue-100">Apply Now</button>
+                          {cat.jobs.map((job, j) => (
+                            <div
+                              key={j}
+                              className="group relative rounded-3xl p-[1px] bg-gradient-to-br from-blue-500/40 via-purple-500/30 to-blue-400/40 hover:from-blue-500 hover:via-purple-500 hover:to-blue-400 transition-all duration-500"
+                            >
+                              <div className="relative bg-white rounded-3xl p-8 overflow-hidden">
+
+                                {/* floating glow */}
+                                <div className="absolute -top-16 -right-16 w-56 h-56 bg-blue-100 rounded-full blur-3xl opacity-30 group-hover:opacity-30 transition" />
+
+                                {/* header */}
+                                <div className="flex justify-between items-start mb-6">
+                                  <div>
+                                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
+                                      {job.title}
+                                    </h3>
+
+                                    <div className="flex items-center gap-3 mt-4">
+                                      <span className="flex items-center gap-2 text-xs font-semibold bg-slate-100 text-slate-700 px-4 py-1.5 rounded-full shadow-inner">
+                                        <MapPin size={13} />
+                                        {job.location}
+                                      </span>
+
+                                      <span className="flex items-center gap-2 text-xs font-semibold bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full shadow-inner">
+                                        <Clock size={13} />
+                                        {job.type}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* arrow indicator */}
+                                  <div className="translate-x-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
+                                  </div>
+                                </div>
+
+                                {/* separator */}
+                                <div className="h-px bg-linear-to-r from-transparent via-slate-200 to-transparent mb-6" />
+
+                                {/* description */}
+                                <p className="text-slate-600 leading-relaxed line-clamp-4 mb-8">
+                                  {job.description}
+                                </p>
+
+                                {/* CTA */}
+                                <button
+                                  className="relative text-sm font-semibold text-blue-700 group/btn"
+                                >
+                                  Apply
+                                  <span className="ml-2 inline-block transition-transform group-hover/btn:translate-x-1">→</span>
+                                  <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-blue-600 group-hover/btn:w-full transition-all duration-300" />
+                                </button>
+
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -614,28 +718,37 @@ const EditCareer = ({ pageTitle }) => {
                     ));
                   }
 
-
-                  if (id === 'benefits') {
+                  // Render Benefits
+                  if (type === 'benefits') {
                     return (
-                      <div key={id} className="bg-linear-to-r from-blue-50 to-white p-10 rounded-xl text-center space-y-4 shadow-md border border-blue-50">
+                      <div key={id} className="bg-linear-to-r from-blue-50 to-white p-10 rounded-xl text-center space-y-4 shadow-md">
                         <h2 className="text-3xl font-bold mb-2 pb-5 text-gray-900">{data.title}</h2>
-                        <ul className="list-disc list-inside text-gray-700 mt-4 max-w-2xl mx-auto space-y-3 text-left">
-                          {data.bullets?.map((b, i) => <li key={i} className="hover:text-blue-600 transition-colors">{b}</li>)}
+                        <ul className="list-disc list-inside text-gray-700 mt-4 max-w-2xl mx-auto space-y-2 text-left">
+                          {data.bullets?.map((b, i) => <li key={i}>{b}</li>)}
                         </ul>
                       </div>
                     );
                   }
 
-                  if (id === 'contactCTA') {
+                  // Render Contact CTA
+                  if (type === 'contactCTA') {
                     return (
-                      <div key={id} className="flex flex-col md:flex-row items-center justify-between pt-12 mt-14 mb-24 border-t border-gray-100">
-                        <div className="flex flex-col text-left max-w-2xl md:ml-15">
-                          <h2 className="text-2xl font-bold mb-2 text-gray-900">{data.title}</h2>
+                      <div key={id} className="flex flex-col md:flex-row items-center justify-between pt-4 mt-14">
+                        <div className="flex flex-col text-left max-w-2xl ml-15">
+                          <h2 className="text-xl font-bold mb-2 text-gray-900">{data.title}</h2>
                           <p className="text-gray-700">{data.text}</p>
                         </div>
-                        <button className="bg-linear-to-r md:mr-10 from-blue-600 to-purple-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg shadow-purple-100 transition-all mt-8 md:mt-0 whitespace-nowrap">{data.buttonText}</button>
+                        <button
+                          className="bg-linear-to-r mr-10 from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition cursor-pointer whitespace-nowrap">
+                          {data.buttonText}
+                        </button>
                       </div>
                     );
+                  }
+
+                  // Render Custom Section
+                  if (type === 'custom') {
+                    return renderCustomSection(id);
                   }
 
                   return null;

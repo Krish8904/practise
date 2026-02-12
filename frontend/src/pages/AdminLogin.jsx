@@ -87,7 +87,7 @@ const AdminLogin = () => {
       </div>
 
       {/* Login Form */}
-      <div className="bg-gray-50 p-8 rounded-2xl shadow-lg max-w-xl mx-auto">
+      <div className="bg-gray-50 p-8 rounded-2xl shadow-lg max-w-xl mb-5 mx-auto">
         <h2 className="text-2xl text-blue-600 font-bold mb-6 text-center">
           Sign in to your account
         </h2>

@@ -5,10 +5,10 @@ const Touch = () => {
   return (
     <div className="max-w-5xl mt-20 mx-auto px-4 py-16">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
-        <p className="text-gray-600">
+        <h1 className="text-5xl text-blue-600 font-bold mb-4">Contact Us</h1>
+        <p className="text-gray-600 text-xxl">
           Our experts are always happy to discuss your challenge. Reach out, and we
-          will connect you with a member of our team.
+          will connect  <br /> you with a member of our team.
         </p>
       </div>
 
@@ -23,12 +23,12 @@ const Touch = () => {
           </a>
         </div>
 
-        <div className="p-6 border rounded-lg shadow hover:shadow-lg transition">
+        <div className="p-6 border rounded-lg shadow hover:shadow-lg">
           <h2 className="text-xl font-semibold mb-2">Email us directly</h2>
-          <p className="text-gray-600 mb-4">Reach out for general enquiries.</p>
-          <button className="bg-blue-600 text-white cursor-pointer px-4 py-2 rounded hover:bg-blue-700">
-            Send Email
-          </button>
+          <p className="text-gray-600 pb-6">Reach out for general enquiries.</p>
+          <span className="bg-black text-white px-3 py-2 rounded">
+            Email us directly by filling out the form below ↴
+          </span>
         </div>
       </div>
 

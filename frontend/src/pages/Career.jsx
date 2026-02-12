@@ -253,14 +253,15 @@ const Career = () => {
                 <h2 className="text-xl font-bold mb-2 text-gray-900">{data.title}</h2>
                 <p className="text-gray-700">{data.text}</p>
               </div>
-              <button className="bg-linear-to-r mr-10 from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition cursor-pointer whitespace-nowrap">
+              <button
+                onClick={() => navigate(`/career/applyforjobs`)}
+                className="bg-linear-to-r mr-10 from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition cursor-pointer whitespace-nowrap">
                 {data.buttonText}
               </button>
             </div>
           );
         }
 
-        // Render Custom Section
         if (type === 'custom') {
           return renderCustomSection(id);
         }

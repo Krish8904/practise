@@ -38,7 +38,7 @@ const ExportButton = ({ data, fileName = "ExportData" }) => {
         doc.addImage(logoBase64, "WEBP", 6, 4, 40, 30);
 
         // Company name right
-        doc.setFontSize(20);
+        doc.setFontSize(24);
         doc.setTextColor(0);
         doc.setFont("helvetica", "bold");
         doc.text("SubDuxion", pageWidth - 14, 21, { align: "right" });

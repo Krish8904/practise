@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.post("/", async (req, res) => {
   try {
-    const { name, phone, date, time } = req.body;
+    const { name, phone, topic, date, time } = req.body; // include topic
 
     // Simple validation
     if (!name || !phone || !date || !time) {
@@ -19,6 +19,7 @@ router.post("/", async (req, res) => {
 
     const newBooking = new Booking({
       name,
+      topic,
       phone,
       date,
       time,

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-console.log("✅ adminController.js loaded");
+console.log(" adminController.js loaded");
 
 const verifyCaptcha = async (token) => {
   console.log("🟢 Token:", token);
@@ -49,15 +49,15 @@ export const adminLogin = async (req, res) => {
 
     if (!isHuman) {
       console.warn("❌ CAPTCHA FAILED");
-      return res.status(400).json({ message: "Captcha failed" });
+      return res.status(400).json({ message: "Captcha failed"});
     }
 
     if (email === "admin@example.com" && password === "admin123") {
       console.log("LOGIN SUCCESS ✅\n");
-      return res.status(200).json({ message: "Login success" });
+      return res.status(200).json({ message: "Login success"});
     } else {
       console.warn("❌ INVALID CREDENTIALS\n");
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials"});
     }
   } catch (err) {
     console.error("ERROR:", err.message);
