@@ -59,7 +59,7 @@ const CompanyExport = ({ data, fileName = "CompanyInquiries" }) => {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      const logoBase64 = "/newlogo.png";  
+      const logoBase64 = "/newlogo.png";
 
       const header = () => {
         // Logo 
@@ -128,11 +128,17 @@ const CompanyExport = ({ data, fileName = "CompanyInquiries" }) => {
       doc.save(`${fileName}.pdf`);
     }
 
-    //  Excel
     if (format === "xlsx") {
-      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const worksheetData = [
+        headers,
+        ...rows
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Companies");
+      XLSX.utils.book_append_sheet(wb, ws, "Company Inquiries");
+
       XLSX.writeFile(wb, `${fileName}.xlsx`);
     }
 
@@ -170,7 +176,7 @@ const CompanyExport = ({ data, fileName = "CompanyInquiries" }) => {
   return (
     <div className="relative inline-block group shrink-0">
       {/* Blue Export Button */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-white text-white rounded-lg cursor-pointer whitespace-nowrap hover:text-blue-600 border ">
+      <div className="inline-flex items-center gap-2 px-4 mr-1.5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
         Export
         <FileDown size={18} />
       </div>

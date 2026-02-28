@@ -34,11 +34,16 @@ import CompanyInquiries from "./inquiries/CompanyInquiries";
 import Analytics from "./pages/adminEdit/Analytics";
 import ServicesForm from "./components/ServicesForm";
 {/*----------Masters-------- */}
-import MastersAdmin from "./pages/MastersAdmin";
 import AdminNatureOfBusiness from "./mastersPages/AdminNatureOfBusiness";
 import Channel from "./mastersPages/Channel";
 import Category from "./mastersPages/Category";
 import Subcategory from "./mastersPages/Subcategory";
+import Types from "./mastersPages/Types";
+import ExpenseForm from "./pages/adminEdit/ExpenseForm";
+import ExpenseInquiries from "./inquiries/ExpenseInquiries";
+import Country from "./mastersPages/Country";
+import ExpenseCurrency from "./mastersPages/Currency";
+import MastersPage from "./mastersPages/MasterPage";
 
 
 function App() {
@@ -99,18 +104,25 @@ function App() {
           <Route path="inquiries/call" element={<CallInquiries />} />
           <Route path="inquiries/contact" element={<ContactInquiries />} />
           <Route path="inquiries/job" element={<JobInquiries />} />
+          <Route path="expense-inquiries" element={<ExpenseInquiries />} />
+
           <Route path="logs" element={<Logs />} />
           <Route path="createcareer" element={<AddSection />} />
           <Route path="newsection" element={<NewSectionEditor />} />
           <Route path="all-logs" element={<AllLogs />} />
           <Route path="newcompany" element={<CompanyInquiries />} />
-          <Route path="analytics" element={<Analytics />} />        
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="manageexpense" element={<ExpenseForm />} />
+
           {/*----------Masters-------- */}  
-          <Route path="mainmasters" element={<MastersAdmin />} />          
+          <Route path="mainmasters" element={<MastersPage/>} />          
           <Route path="mainmasters/natureofbusiness" element={<AdminNatureOfBusiness />} />          
           <Route path="mainmasters/channel" element={<Channel />} />          
           <Route path="mainmasters/category" element={<Category />} />          
           <Route path="mainmasters/subcategory" element={<Subcategory />} />          
+          <Route path="mainmasters/types" element={<Types />} />          
+          <Route path="mainmasters/country" element={<Country />} />          
+          <Route path="mainmasters/currency" element={<ExpenseCurrency />} />          
 
         </Route>
 

@@ -6,8 +6,9 @@ import {
   Users, Building2, LayoutGrid, Table, FilePlus,
 } from "lucide-react";
 import CompanyCards from "./CompanyCards";
-import CompanyExport from "../components/CompanyExport";
 import CompanyForm from "../pages/CompanyForm";
+import CompanyExport from "../utils/CompanyExport";
+import CompanyImport from "../utils/CompanyImport";
 import FilterCompanyInq, { DEFAULT_FILTERS } from "../utils/FilterCompanyInq";
 import SortCompanyInq from "../utils/SortCompanyInq";
 
@@ -53,11 +54,11 @@ function Avatar({ name = "" }) {
 /* ─── Pill ────────────────────────────────────────────────────── */
 function Pill({ label, color = "gray" }) {
   const palettes = {
-    gray: { bg: "#e9ebee", text: "#1a202c", border: "#c1c7d0" },
-    blue: { bg: "#dbeafe", text: "#1e3a8a", border: "#93c5fd" },
+    gray:   { bg: "#e9ebee", text: "#1a202c", border: "#c1c7d0" },
+    blue:   { bg: "#dbeafe", text: "#1e3a8a", border: "#93c5fd" },
     violet: { bg: "#ede9fe", text: "#3730a3", border: "#c4b5fd" },
-    pink: { bg: "#fce7f3", text: "#831843", border: "#f9a8d4" },
-    green: { bg: "#dcfce7", text: "#14532d", border: "#86efac" },
+    pink:   { bg: "#fce7f3", text: "#831843", border: "#f9a8d4" },
+    green:  { bg: "#dcfce7", text: "#14532d", border: "#86efac" },
   };
   const c = palettes[color] ?? palettes.gray;
   return (
@@ -76,7 +77,6 @@ const genderColor = (g = "") =>
 /* ─── Main ────────────────────────────────────────────────────── */
 const CompanyInquiries = () => {
 
-  // ── hooks must be INSIDE the component ──────────────────────────
   const { sidebarCollapsed } = useOutletContext();
 
   const [companies, setCompanies] = useState([]);
@@ -142,17 +142,35 @@ const CompanyInquiries = () => {
           .some((v) => filters.subcategory.includes(v))
       );
 
-    // 2.5. date filter
+    // 2.5. exact date filter
     if (filters.registeredDate) {
       list = list.filter((c) => {
         if (!c.createdAt) return false;
-        const d = new Date(c.createdAt);
+        const d  = new Date(c.createdAt);
         const sd = new Date(filters.registeredDate);
         return (
           d.getFullYear() === sd.getFullYear() &&
-          d.getMonth() === sd.getMonth() &&
-          d.getDate() === sd.getDate()
+          d.getMonth()    === sd.getMonth()    &&
+          d.getDate()     === sd.getDate()
         );
+      });
+    }
+
+    // 2.6. date range filter
+    if (filters.dateFrom) {
+      const from = new Date(filters.dateFrom);
+      from.setHours(0, 0, 0, 0);
+      list = list.filter((c) => {
+        if (!c.createdAt) return false;
+        return new Date(c.createdAt) >= from;
+      });
+    }
+    if (filters.dateTo) {
+      const to = new Date(filters.dateTo);
+      to.setHours(23, 59, 59, 999);
+      list = list.filter((c) => {
+        if (!c.createdAt) return false;
+        return new Date(c.createdAt) <= to;
       });
     }
 
@@ -172,12 +190,12 @@ const CompanyInquiries = () => {
     return list;
   }, [companies, search, filters, sortValue]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated   = filtered.slice((page - 1) * pageSize, page * pageSize);
   const showingFrom = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
-  const showingTo = Math.min(page * pageSize, filtered.length);
+  const showingTo   = Math.min(page * pageSize, filtered.length);
 
-  const handleSearch = (v) => { setSearch(v); setPage(1); };
+  const handleSearch       = (v) => { setSearch(v);  setPage(1); };
   const handleFilterChange = (f) => { setFilters(f); setPage(1); };
 
   if (loading) {
@@ -198,38 +216,41 @@ const CompanyInquiries = () => {
       {showImportForm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)" }}
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)" }}
           onClick={() => setShowImportForm(false)}
         >
           <div
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto"
-            style={{ minWidth: 700, margin: "0 16px" }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"
             onClick={(e) => e.stopPropagation()}
+            style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            <button
-              onClick={() => setShowImportForm(false)}
-              className="absolute top-4 right-4 z-10 w-8 h-8 flex cursor-pointer items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition"
-            >
-              <X size={16} />
-            </button>
-            <CompanyForm
-              editData={null}
-              onClose={() => setShowImportForm(false)}
-              onSuccess={() => { setShowImportForm(false); fetchCompanies(); }}
-            />
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Import Companies (Excel)</h2>
+              <button
+                onClick={() => setShowImportForm(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6">
+              <CompanyImport
+                variant="modal"
+                onSuccess={() => { setShowImportForm(false); fetchCompanies(); }}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Sticky Header ── */}
       <div
-        className="bg-white border-b border-gray-200 sticky top-0 z-30" // Increased z-index
+        className="bg-white border-b border-gray-200 sticky top-0 z-30"
         style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}
       >
-        <div
-          className="w-full mx-auto px-5 py-3 flex flex-wrap items-center justify-between gap-4"
-        >
-          {/* ── Title Group ── */}
+        <div className="w-full mx-auto px-5 py-3 flex flex-wrap items-center justify-between gap-4">
+
+          {/* Title Group */}
           <div className="flex items-center gap-3 shrink-0">
             <div
               className="flex items-center justify-center rounded-xl bg-blue-600 shrink-0"
@@ -239,13 +260,15 @@ const CompanyInquiries = () => {
             </div>
             <div>
               <h1
-                className="text-xl font-bold text-gray-900 leading-tight whitespace-nowrap"
+                className="text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 Registered Companies
               </h1>
+            </div>
+            <div className="flex">
               <p
-                className="text-xs text-gray-400 font-medium whitespace-nowrap mt-0.5"
+                className="text-xs text-gray-400 text-end font-medium whitespace-nowrap mt-0.5"
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 {viewMode === "table"
@@ -255,10 +278,7 @@ const CompanyInquiries = () => {
             </div>
           </div>
 
-          {/* ── Controls Group ── */}
-          {/* Removed overflow-x-auto here to prevent dropdown clipping */}
           <div className="flex items-center flex-wrap gap-3">
-
             <SortCompanyInq
               search={search}
               onSearch={handleSearch}
@@ -266,19 +286,13 @@ const CompanyInquiries = () => {
               onSort={(v) => { setSortValue(v); setPage(1); }}
             />
 
-            <FilterCompanyInq
-              filters={filters}
-              onChange={handleFilterChange}
-            />
-
-            {/* Divider */}
-            <div className="hidden sm:block w-px h-6 bg-gray-200 shrink-0" />
+            <FilterCompanyInq filters={filters} onChange={handleFilterChange} />
 
             {/* View Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1 shrink-0">
+            <div className="flex items-center ml-1.5 mr-1.5 bg-gray-100 rounded-lg p-1 shrink-0">
               <button
                 onClick={() => setViewMode("table")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
+                className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   background: viewMode === "table" ? "white" : "transparent",
@@ -290,7 +304,7 @@ const CompanyInquiries = () => {
               </button>
               <button
                 onClick={() => setViewMode("card")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
+                className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   background: viewMode === "card" ? "white" : "transparent",
@@ -302,18 +316,9 @@ const CompanyInquiries = () => {
               </button>
             </div>
 
-            <div className="hidden sm:block w-px h-6 bg-gray-200 shrink-0" />
-
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowImportForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                <FilePlus size={15} /> Import
-              </button>
-
+            <div className="flex items-center gap-1">
+              <CompanyImport onSuccess={fetchCompanies} />
               <CompanyExport data={filtered} />
             </div>
           </div>
@@ -333,7 +338,6 @@ const CompanyInquiries = () => {
             <div className="overflow-x-auto">
               <table className="min-w-max w-full">
 
-                {/* ── thead ── */}
                 <thead>
                   <tr style={{ background: "#f0f2f5", borderBottom: "2px solid #d1d5db" }}>
                     {[
@@ -352,7 +356,6 @@ const CompanyInquiries = () => {
                   </tr>
                 </thead>
 
-                {/* ── tbody ── */}
                 <tbody className="divide-y divide-gray-200">
                   {paginated.length === 0 ? (
                     <tr>
@@ -378,7 +381,7 @@ const CompanyInquiries = () => {
                     </tr>
                   ) : (
                     paginated.map((c, idx) => {
-                      const rowNum = (page - 1) * pageSize + idx + 1;
+                      const rowNum   = (page - 1) * pageSize + idx + 1;
                       const fullName = [c.firstName, c.middleName, c.lastName].filter(Boolean).join(" ");
                       return (
                         <tr
@@ -489,7 +492,7 @@ const CompanyInquiries = () => {
               </table>
             </div>
 
-            {/* ── Pagination ── */}
+            {/* Pagination */}
             {filtered.length > 0 && (
               <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700">

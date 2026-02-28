@@ -54,9 +54,9 @@ const lookupPipeline = [
   {
     $addFields: {
       natureOfBusiness: { $map: { input: "$natureOfBusiness", as: "n", in: "$$n.name" } },
-      channel:          { $map: { input: "$channel",          as: "c", in: "$$c.name" } },
-      category:         { $arrayElemAt: [{ $map: { input: "$categoryArr", as: "c", in: "$$c.name" } }, 0] },
-      subcategory:      { $map: { input: "$subcategory",      as: "s", in: "$$s.name" } },
+      channel: { $map: { input: "$channel", as: "c", in: "$$c.name" } },
+      category: { $arrayElemAt: [{ $map: { input: "$categoryArr", as: "c", in: "$$c.name" } }, 0] },
+      subcategory: { $map: { input: "$subcategory", as: "s", in: "$$s.name" } },
     },
   },
   { $unset: "categoryArr" },
@@ -83,6 +83,41 @@ router.post("/", async (req, res) => {
     res.status(201).json({ success: true, data: resolved });
   } catch (err) {
     console.error("Company save error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.post("/bulk", async (req, res) => {
+  try {
+    const { companies } = req.body;
+    console.log("Received companies:", companies.length);
+
+    const inserted = [];
+    const errors   = [];
+
+    // Must use .save() one-by-one so the pre("save") hook
+    // fires and generates sequential companyId (CMP0001, CMP0002…)
+    for (const company of companies) {
+      try {
+        const doc = new Company(sanitizeBody(company));
+        const saved = await doc.save();
+        inserted.push(saved._id);
+      } catch (err) {
+        errors.push(`${company.companyName ?? "Unknown"}: ${err.message}`);
+      }
+    }
+
+    console.log(`Inserted: ${inserted.length}, Failed: ${errors.length}`);
+
+    res.status(201).json({
+      success: true,
+      insertedCount: inserted.length,
+      failedCount:   errors.length,
+      errors,
+    });
+
+  } catch (err) {
+    console.error("Bulk insert error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 });

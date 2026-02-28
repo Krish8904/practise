@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation, useParams, } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Outlet } from "react-router-dom";
 import axios from 'axios';
 import CallInquiries from '../inquiries/Callinquiries';
@@ -13,20 +13,29 @@ import EditUsecases from './adminEdit/EditUsecases';
 import ManageJobs from '../components/ManageJobs';
 import ImageManager from './adminEdit/ImageManager';
 import AllLogs from '../components/AllLogs';
+import ExpenseForm from './adminEdit/ExpenseForm';
+import Sidebar from './Sidebar';
 import { Target } from 'lucide-react';
-import { ImagePlus, LucidePhoneCall, PhoneCall, PhoneCallIcon, PhoneIncoming } from 'lucide-react';
-import { LayoutDashboard, FileText, Briefcase, Users, TrendingUp, Settings, ChevronDown, ChevronRight, Wrench, Building2, MessageSquare, BarChart3, Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign, MoreVertical, Menu, LogOut, User } from 'lucide-react';
+import { ImagePlus, LucidePhoneCall } from 'lucide-react';
+import {
+  LayoutDashboard, FileText, Briefcase, Users, TrendingUp, Settings,
+  ChevronDown, ChevronRight, Wrench, Building2, MessageSquare, BarChart3,
+  Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign,
+  MoreVertical, Menu, LogOut, User,
+} from 'lucide-react';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const isCompanyPage = location.pathname.includes("company-inquiries");
+
   const [activeSection, setActiveSection] = useState('overview');
   const [pagesExpanded, setPagesExpanded] = useState(false);
   const [inquiriesExpanded, setInquiriesExpanded] = useState(false);
   const [activePage, setActivePage] = useState('');
   const [activeInquiry, setActiveInquiry] = useState('');
   const [mastersExpanded, setMastersExpanded] = useState(false);
+  const [companiesExpanded, setCompaniesExpanded] = useState(false);
 
   // Sync URL with active section
   useEffect(() => {
@@ -88,10 +97,6 @@ export default function AdminDashboard() {
       setActivePage('usecases');
       setPagesExpanded(true);
       setActiveInquiry('');
-    } else if (path.startsWith('/admin/newcompany')) {
-      setActiveSection('newcompany');
-      setActivePage('');
-      setActiveInquiry('');
     } else if (path.startsWith('/admin/analytics')) {
       setActiveSection('analytics');
       setActivePage('');
@@ -112,10 +117,36 @@ export default function AdminDashboard() {
       setActiveSection('masters');
       setActivePage('subcategory');
       setMastersExpanded(true);
+    } else if (path.startsWith('/admin/mainmasters/types')) {
+      setActiveSection('masters');
+      setActivePage('types');
+      setMastersExpanded(true);
+    } else if (path.startsWith('/admin/mainmasters/country')) {
+      setActiveSection('masters');
+      setActivePage('country');
+      setMastersExpanded(true);
+    } else if (path.startsWith('/admin/mainmasters/currency')) {
+      setActiveSection('masters');
+      setActivePage('currency');
+      setMastersExpanded(true);
     } else if (path.startsWith('/admin/mainmasters')) {
       setActiveSection('masters');
       setActivePage('');
       setMastersExpanded(true);
+    } else if (path.startsWith('/admin/manageexpense')) {
+      setActiveSection('manageexpense');
+      setActivePage('');
+      setActiveInquiry('');
+    } else if (path.startsWith('/admin/newcompany')) {
+      setActiveSection('newcompany');
+      setCompaniesExpanded(true);
+      setActivePage('');
+      setActiveInquiry('');
+    } else if (path.startsWith('/admin/expense-inquiries')) {
+      setActiveSection('expense-inquiries');
+      setCompaniesExpanded(true);
+      setActivePage('');
+      setActiveInquiry('');
     }
   }, [location.pathname]);
 
@@ -127,7 +158,7 @@ export default function AdminDashboard() {
   const [pageData, setPageData] = useState({
     title: '',
     metaDescription: '',
-    status: 'published'
+    status: 'published',
   });
 
   const [allPages, setAllPages] = useState([]);
@@ -139,7 +170,7 @@ export default function AdminDashboard() {
     services: 0,
     useCases: 0,
     totalVisitors: 0,
-    activeLeads: 0
+    activeLeads: 0,
   });
 
   const [jobs, setJobs] = useState([]);
@@ -152,7 +183,7 @@ export default function AdminDashboard() {
     location: '',
     type: 'Full-Time',
     description: '',
-    status: 'active'
+    status: 'active',
   });
 
   useEffect(() => {
@@ -190,11 +221,9 @@ export default function AdminDashboard() {
         if (page.pageName === 'services' && Array.isArray(page.sections?.services?.items)) {
           servicesCount = page.sections.services.items.length;
         }
-
         if (page.pageName === 'usecases' && Array.isArray(page.sections?.usecases?.items)) {
           useCasesCount = page.sections.usecases.items.length;
         }
-
         if (page.pageName === 'career') {
           const jobCategories = page.sections?.jobCategoriesSection?.jobCategories || [];
           openRolesCount = jobCategories.reduce((acc, cat) => acc + (cat.jobs?.length || 0), 0);
@@ -260,7 +289,7 @@ export default function AdminDashboard() {
               location: job.location,
               type: job.type,
               description: job.description,
-              status: 'active'
+              status: 'active',
             });
           });
         });
@@ -278,7 +307,7 @@ export default function AdminDashboard() {
           location: 'Remote / EU',
           type: 'Full-Time',
           description: 'Guide clients in implementing AI solutions, from strategy to deployment, ensuring measurable business impact.',
-          status: 'active'
+          status: 'active',
         },
       ]);
     } finally {
@@ -293,28 +322,22 @@ export default function AdminDashboard() {
       location: '',
       type: 'Full-Time',
       description: '',
-      status: 'active'
+      status: 'active',
     });
   };
 
   const handleJobInputChange = (e) => {
     const { name, value } = e.target;
-    setJobFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setJobFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAddJob = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/pages/career/job', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobFormData),
       });
-
       if (response.ok) {
         await fetchJobs();
         resetJobForm();
@@ -323,11 +346,8 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error adding job:', error);
-      const newJob = {
-        id: `new-${Date.now()}`,
-        ...jobFormData,
-      };
-      setJobs(prev => [...prev, newJob]);
+      const newJob = { id: `new-${Date.now()}`, ...jobFormData };
+      setJobs((prev) => [...prev, newJob]);
       resetJobForm();
       setShowAddForm(false);
     }
@@ -341,21 +361,21 @@ export default function AdminDashboard() {
       location: job.location,
       type: job.type,
       description: job.description,
-      status: job.status
+      status: job.status,
     });
     setShowAddForm(false);
   };
 
   const handleUpdateJob = async (job) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(jobFormData),
-      });
-
+      const response = await fetch(
+        `http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(jobFormData),
+        }
+      );
       if (response.ok) {
         await fetchJobs();
         setEditingJob(null);
@@ -363,33 +383,26 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error updating job:', error);
-      setJobs(prev => prev.map(j =>
-        j.id === job.id
-          ? { ...j, ...jobFormData }
-          : j
-      ));
+      setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, ...jobFormData } : j)));
       setEditingJob(null);
       resetJobForm();
     }
   };
 
   const handleDeleteJob = async (job) => {
-    if (!window.confirm('Are you sure you want to delete this job opening?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this job opening?')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`, {
-        method: 'DELETE',
-      });
-
+      const response = await fetch(
+        `http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`,
+        { method: 'DELETE' }
+      );
       if (response.ok) {
         await fetchJobs();
         fetchStats();
       }
     } catch (error) {
       console.error('Error deleting job:', error);
-      setJobs(prev => prev.filter(j => j.id !== job.id));
+      setJobs((prev) => prev.filter((j) => j.id !== job.id));
     }
   };
 
@@ -398,11 +411,7 @@ export default function AdminDashboard() {
     setActivePage(pageName);
     setPageView('list');
     setEditMode(false);
-    setPageData({
-      title: pageName,
-      metaDescription: '',
-      status: 'published'
-    });
+    setPageData({ title: pageName, metaDescription: '', status: 'published' });
   };
 
   // Breadcrumb component
@@ -412,64 +421,49 @@ export default function AdminDashboard() {
 
       if (activeSection === 'overview') {
         crumbs.push({ label: 'Overview', action: null });
-
       } else if (activeSection === 'pages' && activePage) {
         crumbs.push({ label: 'Pages', action: () => { navigate('/admin'); setPagesExpanded(true); } });
         crumbs.push({ label: activePage.charAt(0).toUpperCase() + activePage.slice(1), action: null });
-        if (editMode) {
-          crumbs.push({ label: 'Edit Section', action: null });
-        }
-
+        if (editMode) crumbs.push({ label: 'Edit Section', action: null });
       } else if (activeSection === 'inquiries') {
         crumbs.push({ label: 'Inquiries', action: () => { navigate('/admin'); setInquiriesExpanded(true); } });
-        if (activeInquiry === 'call') {
-          crumbs.push({ label: 'Call Inquiries', action: null });
-        } else if (activeInquiry === 'contact') {
-          crumbs.push({ label: 'General Inquiries', action: null });
-        } else if (activeInquiry === 'job') {
-          crumbs.push({ label: 'Job Applications', action: null });
-        }
-
+        if (activeInquiry === 'call') crumbs.push({ label: 'Call Inquiries', action: null });
+        else if (activeInquiry === 'contact') crumbs.push({ label: 'General Inquiries', action: null });
+        else if (activeInquiry === 'job') crumbs.push({ label: 'Job Applications', action: null });
       } else if (activeSection === 'manage-jobs') {
         crumbs.push({ label: 'Career Openings', action: null });
-
       } else if (activeSection === 'manage-media') {
         crumbs.push({ label: 'Manage Media', action: null });
-
       } else if (activeSection === 'careers') {
         crumbs.push({ label: 'Career Openings', action: () => { setShowAddForm(false); setEditingJob(null); } });
-        if (showAddForm) {
-          crumbs.push({ label: 'Add New Opening', action: null });
-        } else if (editingJob) {
-          crumbs.push({ label: 'Edit Opening', action: null });
-        }
-
+        if (showAddForm) crumbs.push({ label: 'Add New Opening', action: null });
+        else if (editingJob) crumbs.push({ label: 'Edit Opening', action: null });
       } else if (activeSection === 'analytics') {
         crumbs.push({ label: 'Analytics', action: null });
-
+      } else if (activeSection === 'manageexpense') {
+        crumbs.push({ label: 'Expense Management', action: null });
       } else if (activeSection === 'settings') {
         crumbs.push({ label: 'Settings', action: null });
-
       } else if (activeSection === 'logs') {
         crumbs.push({ label: 'All Logs', action: null });
-
       } else if (activeSection === 'newcompany') {
+        crumbs.push({ label: 'Companies', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Company Inquiries', action: null });
-
+      } else if (activeSection === 'expense-inquiries') {
+        crumbs.push({ label: 'Companies', action: () => setCompaniesExpanded(true) });
+        crumbs.push({ label: 'Expense Management', action: null });
       } else if (activeSection === 'masters') {
         crumbs.push({
           label: 'Masters',
-          action: activePage ? () => { navigate('/admin/mainmasters'); setActivePage(''); } : null
+          action: activePage ? () => { navigate('/admin/mainmasters'); setActivePage(''); } : null,
         });
-        if (activePage === 'natureofbusiness') {
-          crumbs.push({ label: 'Nature of Business', action: null });
-        } else if (activePage === 'channel') {
-          crumbs.push({ label: 'Channel', action: null });
-        } else if (activePage === 'category') {
-          crumbs.push({ label: 'Category', action: null });
-        } else if (activePage === 'subcategory') {
-          crumbs.push({ label: 'Subcategory', action: null });
-        }
+        if (activePage === 'natureofbusiness') crumbs.push({ label: 'Nature of Business', action: null });
+        else if (activePage === 'channel') crumbs.push({ label: 'Channel', action: null });
+        else if (activePage === 'category') crumbs.push({ label: 'Category', action: null });
+        else if (activePage === 'subcategory') crumbs.push({ label: 'Subcategory', action: null });
+        else if (activePage === 'types') crumbs.push({ label: 'Types', action: null });
+        else if (activePage === 'country') crumbs.push({ label: 'Country', action: null });
+        else if (activePage === 'currency') crumbs.push({ label: 'Currency', action: null });
       }
 
       return crumbs;
@@ -500,278 +494,12 @@ export default function AdminDashboard() {
     );
   };
 
-  const Sidebar = React.memo(() => (
-    <div
-      className={`${sidebarCollapsed ? 'w-20' : 'w-67'
-        } bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out border-r  border-slate-700/50 backdrop-blur-xl relative overflow-hidden`}
-    >
-      {/* Animated background linear */}
-      <div className="absolute inset-0 bg-linear-to-br from-blue-600/5 via-transparent to-purple-600/5 opacity-50"></div>
-
-      {/* Header */}
-      <div className="relative p-6 border-b border-slate-700/50">
-        <div className="flex items-center justify-between mb-1">
-          {!sidebarCollapsed && (
-            <div className="animate-fade-in">
-              <h1 className="text-2xl font-bold bg-linear-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                SubDuxion
-              </h1>
-              <p className="text-xs text-slate-400 mt-1">Admin Dashboard</p>
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 hover:bg-slate-700/50 rounded-lg cursor-pointer transition-all duration-200 hover:scale-110"
-          >
-            <Menu size={20} className="text-slate-400" />
-          </button>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent relative">
-        <NavItem
-          icon={<LayoutDashboard size={20} />}
-          label="Overview"
-          active={activeSection === 'overview'}
-          collapsed={sidebarCollapsed}
-          onClick={() => navigate('/admin')}
-        />
-
-        <div className="relative">
-          <NavItem
-            icon={<FileText size={20} />}
-            label="Pages"
-            collapsed={sidebarCollapsed}
-            onClick={() => setPagesExpanded(!pagesExpanded)}
-            hasSubmenu
-            submenuExpanded={pagesExpanded}
-          />
-
-          {pagesExpanded && !sidebarCollapsed && (
-            <div className="ml-4 mt-1 space-y-1 animate-slide-down">
-              {allPages.map((page) => (
-                <button
-                  key={page._id}
-                  onClick={() => navigate(`/admin/${page.pageName}`)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activePage === page.pageName && activeSection === 'pages'
-                    ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                    }`}
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                  <span className="capitalize">{page.pageName}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <NavItem
-            icon={<MessageSquare size={20} />}
-            label="Inquiries"
-            collapsed={sidebarCollapsed}
-            onClick={() => setInquiriesExpanded(!inquiriesExpanded)}
-            hasSubmenu
-            submenuExpanded={inquiriesExpanded}
-          />
-
-          {inquiriesExpanded && !sidebarCollapsed && (
-            <div className="ml-4 mt-1 space-y-1 animate-slide-down">
-              <button
-                onClick={() => navigate('/admin/inquiries/call')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activeInquiry === 'call' && activeSection === 'inquiries'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                <span>Call Inquiries</span>
-              </button>
-              <button
-                onClick={() => navigate('/admin/inquiries/contact')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activeInquiry === 'contact' && activeSection === 'inquiries'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                <span>General Inquiries</span>
-              </button>
-              <button
-                onClick={() => navigate('/admin/inquiries/job')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activeInquiry === 'job' && activeSection === 'inquiries'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                <span>Job Applications</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <NavItem
-            icon={<Target size={20} />}
-            label="Masters"
-            active={activeSection === 'masters'}
-            collapsed={sidebarCollapsed}
-            onClick={() => setMastersExpanded(!mastersExpanded)}
-            hasSubmenu
-            submenuExpanded={mastersExpanded}
-          />
-
-          {mastersExpanded && !sidebarCollapsed && (
-            <div className="ml-4 mt-1 space-y-1 animate-slide-down">
-              <button
-                onClick={() => navigate('/admin/mainmasters/channel')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activePage === 'channel' && activeSection === 'masters'
-                  ? 'bg-linear-to-r bg-slate-700  text-white '
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                Channel
-              </button>
-              <button
-                onClick={() => navigate('/admin/mainmasters/natureofbusiness')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activePage === 'natureofbusiness' && activeSection === 'masters'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                Nature of Business
-              </button>
-              <button
-                onClick={() => navigate('/admin/mainmasters/category')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activePage === 'category' && activeSection === 'masters'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                Category
-              </button>
-              <button
-                onClick={() => navigate('/admin/mainmasters/subcategory')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg text-sm transition-all duration-200 ${activePage === 'subcategory' && activeSection === 'masters'
-                  ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></div>
-                Subcategory
-              </button>
-            </div>
-          )}
-        </div>
-
-        <NavItem
-          icon={<BarChart3 size={20} />}
-          label="Analytics"
-          active={activeSection === 'analytics'}
-          collapsed={sidebarCollapsed}
-          onClick={() => {
-            navigate('/admin/analytics');
-          }}
-        />
-
-        <NavItem
-          icon={<Briefcase size={20} />}
-          label="Career Openings"
-          active={activeSection === 'manage-jobs'}
-          collapsed={sidebarCollapsed}
-          onClick={() => navigate('/admin/manage-jobs')}
-          className="cursor-pointer"
-        />
-
-        <NavItem
-          icon={<Building2 size={20} />}
-          label="Company Inquiries"
-          active={activeSection === 'newcompany'}
-          collapsed={sidebarCollapsed}
-          onClick={() => navigate('/admin/newcompany')}
-        />
-
-        <NavItem
-          icon={<ImagePlus size={20} />}
-          label="Manage Media"
-          active={activeSection === 'manage-media'}
-          collapsed={sidebarCollapsed}
-          onClick={() => navigate('/admin/manage-media')}
-        />
-
-        <NavItem
-          icon={<Settings size={20} />}
-          label="Settings"
-          active={activeSection === 'settings'}
-          collapsed={sidebarCollapsed}
-          onClick={() => {
-            navigate('/admin');
-            setActiveSection('overview');
-          }}
-        />
-
-      </nav>
-
-      {/* User Profile */}
-      <div className="relative p-4 border-t border-slate-700/50">
-        {!sidebarCollapsed ? (
-          <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-700/50 transition-all duration-200  group">
-            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-semibold shadow-lg">
-              A
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">Admin User</p>
-              <p className="text-xs text-slate-400 truncate">admin@example.com</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-semibold shadow-lg cursor-pointer hover:scale-110 transition-transform">
-              A
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  ));
-
-  const NavItem = ({ icon, label, active, collapsed, onClick, hasSubmenu, submenuExpanded }) => (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer rounded-lg transition-all duration-200 group relative ${active
-        ? 'bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]'
-        : 'text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-[1.01]'
-        }`}
-    >
-      <div className={`${active ? 'scale-110' : 'group-hover:scale-110'} transition-transform duration-200`}>
-        {icon}
-      </div>
-      {!collapsed && (
-        <>
-          <span className="flex-1 text-left font-medium">{label}</span>
-          {hasSubmenu && (
-            <div className={`transition-transform duration-200 ${submenuExpanded ? 'rotate-180' : ''}`}>
-              <ChevronDown size={16} />
-            </div>
-          )}
-        </>
-      )}
-    </button>
-  );
-
   const StatCard = ({ icon, value, label, color, delay }) => (
     <div
       className="group relative bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden animate-fade-in-up"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className={`absolute inset-0 bg-linear-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-
       <div className="relative">
         <div className="flex items-start justify-between mb-6">
           <div className={`w-14 h-14 bg-linear-to-br ${color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300`}>
@@ -781,7 +509,6 @@ export default function AdminDashboard() {
             <TrendingUp size={18} className="text-green-500" />
           </div>
         </div>
-
         <div className="space-y-1">
           <h3 className={`text-4xl font-bold bg-linear-to-br ${color} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 origin-left`}>
             {value}
@@ -789,7 +516,6 @@ export default function AdminDashboard() {
           <p className="text-sm font-medium text-slate-600">{label}</p>
         </div>
       </div>
-
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
     </div>
   );
@@ -798,7 +524,7 @@ export default function AdminDashboard() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-4xl font-bold text-slate-900 mb-2 bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text ">
+          <h2 className="text-4xl font-bold text-slate-900 mb-2 bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text">
             Dashboard Overview
           </h2>
           <p className="text-slate-600 flex items-center gap-2">
@@ -822,34 +548,10 @@ export default function AdminDashboard() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              icon={<Briefcase size={24} />}
-              value={stats.openRoles}
-              label="Open Roles"
-              color="from-blue-500 to-blue-600"
-              delay={0}
-            />
-            <StatCard
-              icon={<Wrench size={24} />}
-              value={stats.services}
-              label="Total Services"
-              color="from-purple-500 to-purple-600"
-              delay={100}
-            />
-            <StatCard
-              icon={<Building2 size={24} />}
-              value={stats.useCases}
-              label="Total Use Cases"
-              color="from-orange-500 to-orange-600"
-              delay={200}
-            />
-            <StatCard
-              icon={<LucidePhoneCall size={24} />}
-              value={bookingCount}
-              label="Call Bookings"
-              color="from-green-500 to-green-600"
-              delay={300}
-            />
+            <StatCard icon={<Briefcase size={24} />} value={stats.openRoles} label="Open Roles" color="from-blue-500 to-blue-600" delay={0} />
+            <StatCard icon={<Wrench size={24} />} value={stats.services} label="Total Services" color="from-purple-500 to-purple-600" delay={100} />
+            <StatCard icon={<Building2 size={24} />} value={stats.useCases} label="Total Use Cases" color="from-orange-500 to-orange-600" delay={200} />
+            <StatCard icon={<LucidePhoneCall size={24} />} value={bookingCount} label="Call Bookings" color="from-green-500 to-green-600" delay={300} />
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '400ms' }}>
@@ -860,12 +562,10 @@ export default function AdminDashboard() {
                   onClick={() => navigate('/admin/all-logs')}
                   className="text-sm cursor-pointer font-medium text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                 >
-                  View All
-                  <ChevronRight size={16} />
+                  View All <ChevronRight size={16} />
                 </button>
               </div>
             </div>
-
             <div className="divide-y divide-slate-100">
               {logs.map((log, index) => (
                 <div
@@ -909,22 +609,10 @@ export default function AdminDashboard() {
   return (
     <div className="flex h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-purple-50/30" onClick={() => setShowPageMenu(null)}>
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slide-down {
-          from { opacity: 0; max-height: 0; }
-          to { opacity: 1; max-height: 500px; }
-        }
-        @keyframes slide-in-left {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slide-down { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+        @keyframes slide-in-left { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
         .animate-fade-in-up { animation: fade-in-up 0.5s ease-out; animation-fill-mode: both; }
         .animate-slide-down { animation: slide-down 0.3s ease-out; }
@@ -935,7 +623,22 @@ export default function AdminDashboard() {
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #64748b; }
       `}</style>
 
-      <Sidebar />
+      <Sidebar
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+        activeSection={activeSection}
+        activePage={activePage}
+        activeInquiry={activeInquiry}
+        pagesExpanded={pagesExpanded}
+        setPagesExpanded={setPagesExpanded}
+        inquiriesExpanded={inquiriesExpanded}
+        setInquiriesExpanded={setInquiriesExpanded}
+        mastersExpanded={mastersExpanded}
+        setMastersExpanded={setMastersExpanded}
+        companiesExpanded={companiesExpanded}
+        setCompaniesExpanded={setCompaniesExpanded}
+        allPages={allPages}
+      />
 
       <div className="flex-1 overflow-auto">
         <div className={`p-7 max-w-7xl mx-auto ${isCompanyPage ? "" : "p-8"}`}>
@@ -943,7 +646,7 @@ export default function AdminDashboard() {
           {activeSection === 'overview' ? (
             <OverviewContent />
           ) : (
-            <Outlet  context={{ sidebarCollapsed }} />
+            <Outlet context={{ sidebarCollapsed }} />
           )}
         </div>
       </div>

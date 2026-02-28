@@ -12,6 +12,8 @@ import nodemailer from "nodemailer";
 import contactRoutes from "./routes/contactRoutes.js"
 import companyRoutes from "./routes/companyRoutes.js"
 import masterRoutes from "./routes/masterRoutes.js"
+import expenseRoutes from "./routes/ExpenseRoutes.js"
+import ExpenseMasterRoutes from "./routes/ExpenseMasterRoutes.js"
 
 dotenv.config();
 
@@ -61,7 +63,9 @@ app.use("/api/companies", companyRoutes);
 
 app.use("/api/masters", masterRoutes);
 
-  
+app.use("/api/expenses", expenseRoutes);  
+
+app.use("/api/expense-masters", ExpenseMasterRoutes);
 
 // MongoDB connection
 mongoose

@@ -53,6 +53,8 @@ export const DEFAULT_FILTERS = {
   category: [],
   subcategory: [],
   registeredDate: null,
+  dateFrom: null,
+  dateTo: null,
 };
 
 export default function FilterCompanyInq({ filters, onChange }) {
@@ -84,6 +86,9 @@ export default function FilterCompanyInq({ filters, onChange }) {
 
   const clearAll = () => onChange({ ...DEFAULT_FILTERS });
 
+  const clearDates = () => onChange({ ...filters, registeredDate: null, dateFrom: null, dateTo: null });
+  const hasAnyDate = filters.registeredDate || filters.dateFrom || filters.dateTo;
+
   return (
     <div className="relative shrink-0" ref={ref}>
 
@@ -114,8 +119,8 @@ export default function FilterCompanyInq({ filters, onChange }) {
       {/* ── Panel ── */}
       {open && (
         <div
-          className="absolute right-0 mt-1 bg-white rounded-xl border border-gray-200 z-30 flex overflow-hidden"
-          style={{ minWidth: 480, maxHeight: 400, boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}
+          className="absolute left-0 mt-1 bg-white rounded-xl border border-gray-200 z-30 flex overflow-hidden"
+          style={{ minWidth: 480, maxHeight: 440, boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}
         >
 
           {/* Left: group tabs */}
@@ -159,32 +164,85 @@ export default function FilterCompanyInq({ filters, onChange }) {
               );
             })}
 
-            {/* ── Date filter ── */}
-            <div className="px-3 py-2 mt-1 border-t border-gray-100">
-              <label
-                className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                Registered On
-              </label>
-              <input
-                type="date"
-                value={filters.registeredDate || ""}
-                onChange={(e) =>
-                  onChange({ ...filters, registeredDate: e.target.value || null })
-                }
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-gray-50 transition"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              />
-              {filters.registeredDate && (
-                <button
-                  onClick={() => onChange({ ...filters, registeredDate: null })}
-                  className="mt-1.5 text-xs font-semibold text-red-500 hover:text-red-700 transition"
+            {/* ── Date filters ── */}
+            <div className="px-3 py-2 mt-1 border-t border-gray-100 space-y-3">
+
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <label
+                  className="block text-xs font-semibold text-gray-500 uppercase tracking-wide"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
-                  Clear date
-                </button>
-              )}
+                  Registered On
+                </label>
+                {hasAnyDate && (
+                  <button
+                    onClick={clearDates}
+                    className="text-xs font-semibold text-red-500 hover:text-red-700 transition"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Single date */}
+              <div>
+                <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  Exact date
+                </p>
+                <input
+                  type="date"
+                  value={filters.registeredDate || ""}
+                  onChange={(e) =>
+                    onChange({ ...filters, registeredDate: e.target.value || null })
+                  }
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-gray-50 transition"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-gray-300 font-medium" style={{ fontFamily: "'Poppins', sans-serif" }}>or range</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+
+              {/* From */}
+              <div>
+                <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  From
+                </p>
+                <input
+                  type="date"
+                  value={filters.dateFrom || ""}
+                  max={filters.dateTo || undefined}
+                  onChange={(e) =>
+                    onChange({ ...filters, dateFrom: e.target.value || null })
+                  }
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-gray-50 transition"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                />
+              </div>
+
+              {/* To */}
+              <div>
+                <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  To
+                </p>
+                <input
+                  type="date"
+                  value={filters.dateTo || ""}
+                  min={filters.dateFrom || undefined}
+                  onChange={(e) =>
+                    onChange({ ...filters, dateTo: e.target.value || null })
+                  }
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-gray-50 transition"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                />
+              </div>
+
             </div>
 
           </div>

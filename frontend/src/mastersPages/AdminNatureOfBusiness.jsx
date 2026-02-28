@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Globe, Plus, Search, Pencil, Trash2, X, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 const API = "http://localhost:5000/api/masters";
+const HIGHLIGHT = "#3b82f6";
 
 export default function NatureMasterPage() {
   const [natures, setNatures] = useState([]);
@@ -17,21 +19,20 @@ export default function NatureMasterPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
 
-  // ── Toast ──────────────────────────────────────────────
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ── Fetch ──────────────────────────────────────────────
   const fetchData = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/nature-of-business`);
       setNatures(res.data.data);
       setFiltered(res.data.data);
-    } catch (err) {
+    } catch {
       showToast("Failed to fetch data", "error");
     } finally {
       setLoading(false);
@@ -40,287 +41,454 @@ export default function NatureMasterPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // ── Search filter ──────────────────────────────────────
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(natures.filter((n) => n.name.toLowerCase().includes(q)));
   }, [search, natures]);
 
-  // ── Modal helpers ──────────────────────────────────────
-  const openCreate = () => {
-    setEditingItem(null);
-    setName("");
-    setError("");
-    setShowModal(true);
-  };
+  const openCreate = () => { setEditingItem(null); setName(""); setError(""); setShowModal(true); };
+  const openEdit = (item) => { setEditingItem(item); setName(item.name); setError(""); setShowModal(true); };
+  const closeModal = () => { setShowModal(false); setError(""); setName(""); setEditingItem(null); };
+  const openDelete = (item) => { setDeletingItem(item); setShowDeleteModal(true); };
 
-  const openEdit = (item) => {
-    setEditingItem(item);
-    setName(item.name);
-    setError("");
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setError("");
-    setName("");
-    setEditingItem(null);
-  };
-
-  const openDelete = (item) => {
-    setDeletingItem(item);
-    setShowDeleteModal(true);
-  };
-
-  // ── Save (Create / Update) ─────────────────────────────
   const handleSave = async () => {
-    if (!name.trim()) {
-      setError("Name cannot be empty");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-
+    if (!name.trim()) { setError("Name cannot be empty"); return; }
+    setSaving(true); setError("");
     try {
       if (editingItem) {
-        await axios.put(`${API}/nature-of-business/${editingItem._id}`, {
-          name: name.trim(),
-        });
+        await axios.put(`${API}/nature-of-business/${editingItem._id}`, { name: name.trim() });
         showToast("Nature updated successfully");
       } else {
         await axios.post(`${API}/nature-of-business`, { name: name.trim() });
         showToast("Nature created successfully");
       }
-      closeModal();
-      fetchData();
+      closeModal(); fetchData();
     } catch (err) {
       const msg = err.response?.data?.message || "Something went wrong";
-      // Duplicate key error from MongoDB
-      if (msg.includes("duplicate") || msg.includes("E11000")) {
-        setError("This name already exists");
-      } else {
-        setError(msg);
-      }
-    } finally {
-      setSaving(false);
-    }
+      setError(msg.includes("duplicate") || msg.includes("E11000") ? "This name already exists" : msg);
+    } finally { setSaving(false); }
   };
 
-  // ── Delete ─────────────────────────────────────────────
   const handleDelete = async () => {
     setDeleting(true);
     try {
       await axios.delete(`${API}/nature-of-business/${deletingItem._id}`);
       showToast("Nature deleted successfully");
-      setShowDeleteModal(false);
-      setDeletingItem(null);
-      fetchData();
-    } catch (err) {
-      showToast("Failed to delete", "error");
-    } finally {
-      setDeleting(false);
-    }
+      setShowDeleteModal(false); setDeletingItem(null); fetchData();
+    } catch { showToast("Failed to delete", "error"); }
+    finally { setDeleting(false); }
   };
 
-  // ── Enter key submit ───────────────────────────────────
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSave();
     if (e.key === "Escape") closeModal();
   };
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div style={{ fontFamily: "'Poppins', sans-serif", minHeight: "100vh", background: "#f8fafc", padding: "44px 36px" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
-      {/* Toast */}
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(20px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.97) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes pulse-skeleton {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+
+        .fu  { animation: fadeUp 0.4s ease both; }
+        .d1  { animation-delay: 0.04s; }
+        .d2  { animation-delay: 0.10s; }
+        .d3  { animation-delay: 0.16s; }
+
+        .nature-card {
+          transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+          cursor: default;
+        }
+        .nature-card:hover {
+          box-shadow: 0 6px 24px rgba(59,130,246,0.10) !important;
+          border-color: #bfdbfe !important;
+          transform: translateY(-2px);
+        }
+        .action-btn {
+          transition: background 0.13s ease, color 0.13s ease;
+          border: none; cursor: pointer;
+        }
+        .search-input:focus {
+          outline: none;
+          border-color: ${HIGHLIGHT};
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .modal-input:focus {
+          outline: none;
+          border-color: ${HIGHLIGHT};
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .modal-input.error:focus {
+          border-color: #ef4444;
+          box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+        }
+        .skeleton {
+          animation: pulse-skeleton 1.5s ease infinite;
+          background: #e2e8f0;
+          border-radius: 6px;
+        }
+        .add-btn {
+          transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .add-btn:hover {
+          background: #2563eb !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(59,130,246,0.35) !important;
+        }
+      `}</style>
+
+      {/* ── Toast ── */}
       {toast && (
-        <div
-          className={`fixed top-5 right-5 z-[100] px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium transition-all
-            ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
-        >
-          {toast.type === "success" ? "✓" : "✕"} {toast.message}
+        <div style={{
+          position: "fixed", top: 20, right: 20, zIndex: 200,
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "13px 18px", borderRadius: 12,
+          background: toast.type === "success" ? "#fff" : "#fff",
+          border: `1.5px solid ${toast.type === "success" ? "#86efac" : "#fca5a5"}`,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+          animation: "toastIn 0.3s ease both",
+          fontFamily: "'Poppins', sans-serif",
+        }}>
+          {toast.type === "success"
+            ? <CheckCircle size={17} color="#16a34a" />
+            : <XCircle size={17} color="#dc2626" />}
+          <span style={{ fontSize: 13.5, fontWeight: 500, color: toast.type === "success" ? "#15803d" : "#dc2626" }}>
+            {toast.message}
+          </span>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-4xl font-bold text-slate-800">Nature of Business</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {natures.length} {natures.length === 1 ? "entry" : "entries"} total
-          </p>
+      {/* ── Page header ── */}
+      <div className="fu" style={{ marginBottom: 36 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+          <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#0f172a", letterSpacing: "-1px", lineHeight: 1 }}>
+            Nature of Business
+          </h1>
+          <span style={{ fontSize: 10, fontWeight: 500, color: "#94a3b8", letterSpacing: "0.16em", fontFamily: "'DM Mono', monospace" }}>
+            MASTER
+          </span>
         </div>
+        <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>
+          {natures.length} {natures.length === 1 ? "entry" : "entries"} total
+        </p>
+
+        {/* Rule — same as MastersPage */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
+          <div style={{ width: 28, height: 2, background: "#0f172a", borderRadius: 2 }} />
+          <div style={{ flex: 1, height: 1, background: "#e2e8f0", borderRadius: 2 }} />
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#cbd5e1", letterSpacing: "0.1em" }}>
+            COMPANY MASTER
+          </span>
+        </div>
+      </div>
+
+      {/* ── Toolbar ── */}
+      <div className="fu d1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, marginBottom: 28, flexWrap: "wrap" }}>
+        {/* Search */}
+        <div style={{ position: "relative", flex: "1 1 240px", maxWidth: 320 }}>
+          <Search size={15} color="#94a3b8" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+          <input
+            className="search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search nature of business..."
+            style={{
+              width: "100%", paddingLeft: 38, paddingRight: 14, paddingTop: 10, paddingBottom: 10,
+              fontSize: 14, fontFamily: "'Poppins', sans-serif", fontWeight: 400,
+              border: "1px solid #e2e8f0", borderRadius: 10, background: "white",
+              color: "#334155", boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+            }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", cursor: "pointer", padding: 2 }}>
+              <X size={13} color="#94a3b8" />
+            </button>
+          )}
+        </div>
+
+        {/* Add button */}
         <button
+          className="add-btn"
           onClick={openCreate}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 cursor-pointer text-white rounded-xl shadow font-medium transition"
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "10px 20px", borderRadius: 10,
+            background: HIGHLIGHT, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 600, color: "white",
+            fontFamily: "'Poppins', sans-serif",
+            boxShadow: "0 2px 8px rgba(59,130,246,0.25)",
+            whiteSpace: "nowrap",
+          }}
         >
-          + Add Nature
+          <Plus size={16} /> Add Nature
         </button>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search nature of business..."
-          className="w-full max-w-sm border border-slate-200 bg-white rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
-        />
-      </div>
-
-      {/* Cards */}
+      {/* ── Grid ── */}
       {loading ? (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border p-6 animate-pulse">
-              <div className="h-5 bg-slate-200 rounded w-3/4 mb-4" />
-              <div className="h-4 bg-slate-100 rounded w-1/2" />
+            <div key={i} style={{ background: "white", borderRadius: 14, border: "1px solid #e8ecf0", padding: "22px 22px 18px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div className="skeleton" style={{ height: 18, width: "70%", marginBottom: 10 }} />
+              <div className="skeleton" style={{ height: 12, width: "45%" }} />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 24 }}>
+                <div className="skeleton" style={{ height: 32, width: 64, borderRadius: 8 }} />
+                <div className="skeleton" style={{ height: 32, width: 64, borderRadius: 8 }} />
+              </div>
             </div>
           ))}
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="fu" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", color: "#94a3b8" }}>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+            <Globe size={26} color="#cbd5e1" />
+          </div>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#64748b" }}>
+            {search ? "No results found" : "No natures added yet"}
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: 13.5, color: "#94a3b8" }}>
+            {search ? `Nothing matched "${search}"` : 'Click "Add Nature" to get started'}
+          </p>
+        </div>
       ) : (
-        <div className="grid md:grid-cols-3 gap-6">
-          {filtered.map((item) => (
+        <div className="fu d2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+          {filtered.map((item, idx) => (
             <div
               key={item._id}
-              className="bg-white rounded-2xl shadow-sm border p-6 hover:shadow-md transition group"
+              className="nature-card"
+              onMouseEnter={() => setHoveredCard(item._id)}
+              onMouseLeave={() => setHoveredCard(null)}
+              style={{
+                background: "white", borderRadius: 14,
+                border: "1px solid #e8ecf0",
+                padding: "22px 22px 16px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                overflow: "hidden", position: "relative",
+              }}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-700 group-hover:text-blue-600 transition">
-                    {item.name}
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Added {new Date(item.createdAt).toLocaleDateString("en-IN", {
-                      day: "numeric", month: "short", year: "numeric"
-                    })}
-                  </p>
+              {/* Top accent */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${HIGHLIGHT}, ${HIGHLIGHT}44)`, borderRadius: "14px 14px 0 0" }} />
+
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ display: "flex", gap: 11, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+                    background: `${HIGHLIGHT}10`, border: `1px solid ${HIGHLIGHT}22`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Globe size={16} color={HIGHLIGHT} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#0f172a", lineHeight: 1.3, wordBreak: "break-word" }}>
+                      {item.name}
+                    </p>
+                    <p style={{ margin: "5px 0 0", fontSize: 12, color: "#94a3b8", fontWeight: 400 }}>
+                      Added {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">
+                <span style={{
+                  flexShrink: 0, fontSize: 11, fontWeight: 600, padding: "3px 9px",
+                  borderRadius: 999, background: "#dcfce7", color: "#16a34a",
+                  fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em",
+                }}>
                   Active
                 </span>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              {/* Actions */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
                 <button
+                  className="action-btn"
                   onClick={() => openEdit(item)}
-                  className="text-sm px-4 py-1.5 bg-blue-50 text-blue-700 cursor-pointer rounded-lg hover:bg-blue-100 font-medium transition"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                    background: "#eff6ff", color: "#3b82f6",
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#dbeafe"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "#eff6ff"}
                 >
-                  Edit
+                  <Pencil size={13} /> Edit
                 </button>
                 <button
+                  className="action-btn"
                   onClick={() => openDelete(item)}
-                  className="text-sm px-4 py-1.5 bg-red-50 text-red-600 cursor-pointer rounded-lg hover:bg-red-100 font-medium transition"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                    background: "#fff1f2", color: "#ef4444",
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#fee2e2"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "#fff1f2"}
                 >
-                  Delete
+                  <Trash2 size={13} /> Delete
                 </button>
               </div>
             </div>
           ))}
-
-          {filtered.length === 0 && !loading && (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
-              <div className="text-5xl mb-4">🗂️</div>
-              <p className="text-lg font-medium">
-                {search ? "No results found" : "No natures added yet"}
-              </p>
-              <p className="text-sm mt-1">
-                {search ? "Try a different search term" : 'Click "+ Add Nature" to get started'}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Create / Edit Modal */}
+      {/* ── Create / Edit Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[440px] rounded-2xl p-6 shadow-xl">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-semibold text-slate-800">
-                {editingItem ? "Edit Nature" : "Add Nature of Business"}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
-              >
-                ✕
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+          <div style={{
+            background: "white", width: "100%", maxWidth: 440, borderRadius: 18,
+            padding: "28px 28px 24px", boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+            animation: "modalIn 0.22s ease both", fontFamily: "'Poppins', sans-serif",
+          }}>
+            {/* Modal header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.3px" }}>
+                  {editingItem ? "Edit Nature" : "Add Nature of Business"}
+                </h2>
+                <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
+                  {editingItem ? `Editing: ${editingItem.name}` : "Create a new classification entry"}
+                </p>
+              </div>
+              <button onClick={closeModal} style={{ border: "none", background: "#f1f5f9", borderRadius: 8, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <X size={15} color="#64748b" />
               </button>
             </div>
 
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">
-              Name <span className="text-red-500">*</span>
+            <div style={{ height: 1, background: "#f1f5f9", marginBottom: 22 }} />
+
+            <label style={{ display: "block", fontSize: 13.5, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
+              Name <span style={{ color: "#ef4444" }}>*</span>
             </label>
             <input
               autoFocus
+              className={`modal-input${error ? " error" : ""}`}
               value={name}
               onChange={(e) => { setName(e.target.value); setError(""); }}
               onKeyDown={handleKeyDown}
               placeholder="e.g. Manufacturing, Retail..."
-              className={`w-full border rounded-xl p-3 focus:ring-2 outline-none transition
-                ${error
-                  ? "border-red-400 focus:ring-red-300"
-                  : "border-slate-200 focus:ring-blue-500"
-                }`}
+              style={{
+                width: "100%", padding: "11px 14px", fontSize: 14,
+                fontFamily: "'Poppins', sans-serif", fontWeight: 400,
+                border: `1.5px solid ${error ? "#ef4444" : "#e2e8f0"}`,
+                borderRadius: 10, background: "white", color: "#0f172a",
+                boxSizing: "border-box",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+              }}
             />
             {error && (
-              <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                <span>⚠</span> {error}
-              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                <AlertTriangle size={13} color="#ef4444" />
+                <span style={{ fontSize: 12.5, color: "#ef4444", fontWeight: 500 }}>{error}</span>
+              </div>
             )}
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
               <button
                 onClick={closeModal}
                 disabled={saving}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition"
+                style={{
+                  padding: "10px 18px", borderRadius: 9, border: "1px solid #e2e8f0",
+                  background: "white", color: "#64748b", fontSize: 13.5, fontWeight: 600,
+                  fontFamily: "'Poppins', sans-serif", cursor: "pointer",
+                  transition: "background 0.13s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "white"}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  padding: "10px 22px", borderRadius: 9, border: "none",
+                  background: saving ? "#93c5fd" : HIGHLIGHT,
+                  color: "white", fontSize: 13.5, fontWeight: 600,
+                  fontFamily: "'Poppins', sans-serif",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  boxShadow: saving ? "none" : "0 2px 8px rgba(59,130,246,0.30)",
+                  transition: "background 0.13s, box-shadow 0.13s",
+                }}
               >
-                {saving ? "Saving..." : editingItem ? "Update" : "Create"}
+                {saving ? "Saving…" : editingItem ? "Update" : "Create"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* ── Delete Modal ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[400px] rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-lg">
-                🗑️
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+          <div style={{
+            background: "white", width: "100%", maxWidth: 400, borderRadius: 18,
+            padding: "28px 28px 24px", boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+            animation: "modalIn 0.22s ease both", fontFamily: "'Poppins', sans-serif",
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 10, background: "#fff1f2", border: "1px solid #fecaca", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Trash2 size={18} color="#ef4444" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-800">Delete Nature</h2>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Delete Nature</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>This action cannot be undone.</p>
+              </div>
             </div>
 
-            <p className="text-slate-500 text-sm mb-6">
+            <div style={{ height: 1, background: "#f1f5f9", marginBottom: 16 }} />
+
+            <p style={{ margin: 0, fontSize: 14, color: "#475569", lineHeight: 1.6 }}>
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-slate-700">"{deletingItem?.name}"</span>?
-              This action cannot be undone.
+              <span style={{ fontWeight: 700, color: "#0f172a" }}>"{deletingItem?.name}"</span>?
             </p>
 
-            <div className="flex justify-end gap-3">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
               <button
                 onClick={() => { setShowDeleteModal(false); setDeletingItem(null); }}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition"
+                style={{
+                  padding: "10px 18px", borderRadius: 9, border: "1px solid #e2e8f0",
+                  background: "white", color: "#64748b", fontSize: 13.5, fontWeight: 600,
+                  fontFamily: "'Poppins', sans-serif", cursor: "pointer",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "white"}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  padding: "10px 22px", borderRadius: 9, border: "none",
+                  background: deleting ? "#fca5a5" : "#ef4444",
+                  color: "white", fontSize: 13.5, fontWeight: 600,
+                  fontFamily: "'Poppins', sans-serif",
+                  cursor: deleting ? "not-allowed" : "pointer",
+                  boxShadow: deleting ? "none" : "0 2px 8px rgba(239,68,68,0.28)",
+                  transition: "background 0.13s",
+                }}
               >
-                {deleting ? "Deleting..." : "Yes, Delete"}
+                {deleting ? "Deleting…" : "Yes, Delete"}
               </button>
             </div>
           </div>
