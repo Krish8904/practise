@@ -30,7 +30,6 @@ const fmtDate = (d) => {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-// Static fallback colors for known types — any new type gets auto-color
 const STATIC_TYPE_COLORS = {
   Purchase: { bg: "#dbeafe", text: "#1e3a8a", border: "#93c5fd" },
   Spend: { bg: "#fce7f3", text: "#831843", border: "#f9a8d4" },
@@ -48,23 +47,37 @@ const COLOR_PALETTE = [
   { bg: "#fce7f3", text: "#831843", border: "#f9a8d4" },
 ];
 
-// Build a color map from all unique types found in expenses
 function buildTypeColors(expenses) {
   const colorMap = { ...STATIC_TYPE_COLORS };
   const unknown = [
-    ...new Set(
-      expenses.map((e) => e.typeLabel || e.type).filter(Boolean)
-    )
+    ...new Set(expenses.map((e) => e.typeLabel || e.type).filter(Boolean))
   ].filter((t) => !colorMap[t]);
-  unknown.forEach((t, i) => {
-    colorMap[t] = COLOR_PALETTE[i % COLOR_PALETTE.length];
-  });
+  unknown.forEach((t, i) => { colorMap[t] = COLOR_PALETTE[i % COLOR_PALETTE.length]; });
+  return colorMap;
+}
+
+const COUNTRY_PALETTE = [
+  { bg: "#dbeafe", text: "#1e3a8a", border: "#93c5fd" },
+  { bg: "#dcfce7", text: "#14532d", border: "#86efac" },
+  { bg: "#fef9c3", text: "#713f12", border: "#fde047" },
+  { bg: "#ffedd5", text: "#7c2d12", border: "#fdba74" },
+  { bg: "#f3e8ff", text: "#581c87", border: "#d8b4fe" },
+  { bg: "#fce7f3", text: "#831843", border: "#f9a8d4" },
+  { bg: "#e0f2fe", text: "#0c4a6e", border: "#7dd3fc" },
+  { bg: "#d1fae5", text: "#064e3b", border: "#6ee7b7" },
+  { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
+  { bg: "#ede9fe", text: "#3730a3", border: "#c4b5fd" },
+];
+
+function buildCountryColors(expenses) {
+  const colorMap = {};
+  const countries = [...new Set(expenses.map((e) => e.countryLabel || e.country).filter(Boolean))];
+  countries.forEach((c, i) => { colorMap[c] = COUNTRY_PALETTE[i % COUNTRY_PALETTE.length]; });
   return colorMap;
 }
 
 const ACCENT = "#6d4fc2";
 
-/* ─── Pill — color from typeColors map ───────────────────────── */
 function Pill({ label, typeColors }) {
   const c = typeColors?.[label] ?? { bg: "#e9ebee", text: "#1a202c", border: "#c1c7d0" };
   return (
@@ -75,13 +88,24 @@ function Pill({ label, typeColors }) {
   );
 }
 
+
+function CountryPill({ label, countryColors }) {
+  const c = countryColors?.[label] ?? { bg: "#e9ebee", text: "#1a202c", border: "#c1c7d0" };
+  return (
+    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
+      style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}>
+      {label}
+    </span>
+  );
+}
+
+
 function SignIcon({ amount }) {
   if (amount > 0) return <TrendingUp size={13} style={{ color: "#16a34a" }} />;
   if (amount < 0) return <TrendingDown size={13} style={{ color: "#dc2626" }} />;
   return <Minus size={13} style={{ color: "#9ca3af" }} />;
 }
 
-/* ─── Pagination dots ─────────────────────────────────────────── */
 function PaginationDots({ page, totalPages, onPage }) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
     .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
@@ -111,7 +135,6 @@ function PaginationDots({ page, totalPages, onPage }) {
   );
 }
 
-/* ─── Sort options ───────────────────────────────────────────── */
 const SORT_OPTIONS = [
   { value: "createdAt_desc", label: "Newest First" },
   { value: "createdAt_asc", label: "Oldest First" },
@@ -123,7 +146,6 @@ const SORT_OPTIONS = [
   { value: "company_za", label: "Company Z–A" },
 ];
 
-/* ─── SortBar ────────────────────────────────────────────────── */
 function SortBar({ search, onSearch, sortValue, onSort }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -188,7 +210,7 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
 }
 
 /* ─── Filter ─────────────────────────────────────────────────── */
-const DEFAULT_FILTERS = { type: [], country: [], currency: [], sign: "", date: "" };
+const DEFAULT_FILTERS = { type: [], country: [], currency: [], sign: "", date: "", dateFrom: "", dateTo: "" };
 
 function FilterBar({ filters, onChange, expenses }) {
   const [open, setOpen] = useState(false);
@@ -201,8 +223,18 @@ function FilterBar({ filters, onChange, expenses }) {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // Options come directly from actual expense data — always in sync with DB
-  const uniqueVals = (key) => [...new Set(expenses.map((e) => e[key]).filter(Boolean))];
+  function uniqueValsFromNested(key) {
+    return [
+      ...new Set(
+        expenses.map((e) => {
+          if (key === "type") return e.typeLabel;
+          if (key === "country") return e.countryLabel;
+          if (key === "currency") return e.currencyLabel;
+          return null;
+        }).filter(Boolean)
+      )
+    ];
+  }
 
   const OPTIONS = {
     type: uniqueValsFromNested("type"),
@@ -210,21 +242,6 @@ function FilterBar({ filters, onChange, expenses }) {
     currency: uniqueValsFromNested("currency"),
     sign: ["Income / Credit", "Expense / Debit"],
   };
-
-  function uniqueValsFromNested(key) {
-    return [
-      ...new Set(
-        expenses
-          .map((e) => {
-            if (key === "type") return e.typeLabel;
-            if (key === "country") return e.countryLabel;
-            if (key === "currency") return e.currencyLabel;
-            return null;
-          })
-          .filter(Boolean)
-      )
-    ];
-  }
 
   const GROUPS = [
     { key: "type", label: "Type" },
@@ -245,6 +262,10 @@ function FilterBar({ filters, onChange, expenses }) {
   };
   const clearAll = () => onChange({ ...DEFAULT_FILTERS });
   const isChecked = (gk, val) => gk === "sign" ? filters.sign === val : (filters[gk] || []).includes(val);
+
+  const dateCount = (filters.date ? 1 : 0) + (filters.dateFrom ? 1 : 0) + (filters.dateTo ? 1 : 0);
+  const hasAnyDate = filters.date || filters.dateFrom || filters.dateTo;
+  const clearDates = () => onChange({ ...filters, date: "", dateFrom: "", dateTo: "" });
 
   return (
     <div className="relative shrink-0" ref={ref}>
@@ -268,7 +289,8 @@ function FilterBar({ filters, onChange, expenses }) {
 
       {open && (
         <div className="absolute left-0 mt-1 bg-white rounded-xl border border-gray-200 z-30 flex overflow-hidden"
-          style={{ minWidth: 420, maxHeight: 380, boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}>
+          style={{ minWidth: 420, maxHeight: 440, boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}>
+
           <div className="border-r border-gray-100 py-2 flex flex-col" style={{ minWidth: 140 }}>
             {totalActive > 0 && (
               <button onClick={clearAll}
@@ -278,7 +300,8 @@ function FilterBar({ filters, onChange, expenses }) {
               </button>
             )}
             {GROUPS.map((g) => {
-              const count = g.key === "date" ? (filters.date ? 1 : 0)
+              const count = g.key === "date"
+                ? dateCount
                 : Array.isArray(filters[g.key]) ? filters[g.key].length : (filters[g.key] ? 1 : 0);
               const isActive = activeGroup === g.key;
               return (
@@ -304,20 +327,46 @@ function FilterBar({ filters, onChange, expenses }) {
 
           <div className="flex-1 overflow-y-auto py-2 px-2">
             {activeGroup === "date" ? (
-              <div className="px-2 py-2">
-                <label className="text-xs font-semibold text-gray-500 mb-1 block"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}>Filter by date</label>
-                <input type="date" value={filters.date || ""}
-                  onChange={(e) => onChange({ ...filters, date: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  style={{ fontFamily: "'Poppins', sans-serif" }} />
-                {filters.date && (
-                  <button onClick={() => onChange({ ...filters, date: "" })}
-                    className="mt-2 text-xs text-red-500 hover:text-red-700 font-semibold"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}>
-                    Clear date
-                  </button>
-                )}
+              <div className="px-2 py-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}>Filter by date</label>
+                  {hasAnyDate && (
+                    <button onClick={clearDates}
+                      className="text-xs font-semibold text-red-500 hover:text-red-700 transition"
+                      style={{ fontFamily: "'Poppins', sans-serif" }}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>Exact date</p>
+                  <input type="date" value={filters.date || ""}
+                    onChange={(e) => onChange({ ...filters, date: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    style={{ fontFamily: "'Poppins', sans-serif" }} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-xs text-gray-300 font-medium" style={{ fontFamily: "'Poppins', sans-serif" }}>or range</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>From</p>
+                  <input type="date" value={filters.dateFrom || ""}
+                    max={filters.dateTo || undefined}
+                    onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    style={{ fontFamily: "'Poppins', sans-serif" }} />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>To</p>
+                  <input type="date" value={filters.dateTo || ""}
+                    min={filters.dateFrom || undefined}
+                    onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    style={{ fontFamily: "'Poppins', sans-serif" }} />
+                </div>
               </div>
             ) : (
               (OPTIONS[activeGroup] || []).map((opt) => {
@@ -349,7 +398,6 @@ function FilterBar({ filters, onChange, expenses }) {
 
 /* ─── Main page ──────────────────────────────────────────────── */
 const ExpenseInquiries = () => {
-  const { sidebarCollapsed } = useOutletContext();
 
   const [viewMode, setViewMode] = useState("table");
   const [expenses, setExpenses] = useState([]);
@@ -374,27 +422,15 @@ const ExpenseInquiries = () => {
   }, []);
 
   useEffect(() => {
-    const handleMasterUpdate = () => {
-      fetchExpenses(); // your existing fetch function
-    };
-
+    const handleMasterUpdate = () => { fetchExpenses(); };
     window.addEventListener("expenseMastersUpdated", handleMasterUpdate);
-
-    return () => {
-      window.removeEventListener("expenseMastersUpdated", handleMasterUpdate);
-    };
+    return () => window.removeEventListener("expenseMastersUpdated", handleMasterUpdate);
   }, []);
 
   useEffect(() => {
-    const refresh = () => {
-      fetchExpenses();
-    };
-
+    const refresh = () => { fetchExpenses(); };
     window.addEventListener("expense-master-updated", refresh);
-
-    return () => {
-      window.removeEventListener("expense-master-updated", refresh);
-    };
+    return () => window.removeEventListener("expense-master-updated", refresh);
   }, []);
 
   useEffect(() => {
@@ -413,34 +449,25 @@ const ExpenseInquiries = () => {
     }
   };
 
-  // Build type color map from actual expense data — no separate masters fetch needed
   const typeColors = useMemo(() => buildTypeColors(expenses), [expenses]);
+  const countryColors = useMemo(() => buildCountryColors(expenses), [expenses]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     let list = q
       ? expenses.filter((e) =>
-        [
-          e.transactionId,
-          e.company,
-          e.counterparty,
-          e.department,
-          e.description,
-          e.account,
-          e.typeLabel,
-          e.countryLabel,
-          e.currencyLabel
-        ]
+        [e.transactionId, e.company, e.counterparty, e.department,
+        e.description, e.account, e.typeLabel, e.countryLabel, e.currencyLabel]
           .some((v) => toStr(v).includes(q))
       )
       : [...expenses];
 
     if (filters.type.length) list = list.filter((e) => filters.type.includes(e.typeLabel));
-    if (filters.country.length) list = list.filter((e) => filters.country.includes(e.countryLabel)
-    );
+    if (filters.country.length) list = list.filter((e) => filters.country.includes(e.countryLabel));
     if (filters.currency.length) list = list.filter((e) => filters.currency.includes(e.currencyLabel));
     if (filters.sign === "Income / Credit") list = list.filter((e) => e.amount > 0);
     if (filters.sign === "Expense / Debit") list = list.filter((e) => e.amount < 0);
+
     if (filters.date) {
       list = list.filter((e) => {
         if (!e.date) return false;
@@ -449,6 +476,18 @@ const ExpenseInquiries = () => {
           d.getMonth() === sd.getMonth() &&
           d.getDate() === sd.getDate();
       });
+    }
+
+    if (filters.dateFrom) {
+      const from = new Date(filters.dateFrom);
+      from.setHours(0, 0, 0, 0);
+      list = list.filter((e) => e.date && new Date(e.date) >= from);
+    }
+
+    if (filters.dateTo) {
+      const to = new Date(filters.dateTo);
+      to.setHours(23, 59, 59, 999);
+      list = list.filter((e) => e.date && new Date(e.date) <= to);
     }
 
     if (sortValue === "createdAt_desc") list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -491,9 +530,7 @@ const ExpenseInquiries = () => {
       <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
         <Receipt size={24} className="text-gray-400" />
       </div>
-      <p className="text-base font-semibold text-gray-800" style={{ fontFamily: "'Poppins', sans-serif" }}>
-        No transactions found
-      </p>
+      <p className="text-base font-semibold text-gray-800" style={{ fontFamily: "'Poppins', sans-serif" }}>No transactions found</p>
       <p className="text-sm text-gray-500" style={{ fontFamily: "'Poppins', sans-serif" }}>
         {search ? `No results for "${search}".` : "No data available."}
       </p>
@@ -531,7 +568,6 @@ const ExpenseInquiries = () => {
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Poppins', sans-serif" }}>
 
-      {/* ── Form modal ── */}
       {showForm && (
         <ExpenseForm
           editData={editData}
@@ -593,8 +629,7 @@ const ExpenseInquiries = () => {
             </div>
 
             <button onClick={openImport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer"
-            >
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
               <FilePlus size={16} /> Import
             </button>
             <ExpenseExport data={filtered} fileName="Expenses_Report" />
@@ -607,10 +642,8 @@ const ExpenseInquiries = () => {
         <div className="min-h-screen" style={{ fontFamily: "'Poppins', sans-serif" }}>
           <div className="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-medium text-gray-500">
-              Showing{" "}
-              <span className="font-bold text-gray-800">{showingFrom}–{showingTo}</span>
-              {" "}of{" "}
-              <span className="font-bold text-gray-800">{filtered.length}</span> transactions
+              Showing <span className="font-bold text-gray-800">{showingFrom}–{showingTo}</span>
+              {" "}of <span className="font-bold text-gray-800">{filtered.length}</span> transactions
             </p>
             <select value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
@@ -618,18 +651,12 @@ const ExpenseInquiries = () => {
               {CARD_PAGE_SIZES.map((n) => <option key={n} value={n}>{n} per page</option>)}
             </select>
           </div>
-
           <div className="px-3 pb-6">
             {paginated.length === 0 ? <EmptyState /> : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {paginated.map((e, idx) => (
-                  <ExpenseCard
-                    key={e._id}
-                    tx={e}
-                    index={(page - 1) * pageSize + idx + 1}
-                    onEdit={openEdit}
-                    typeColors={typeColors}
-                  />
+                  <ExpenseCard key={e._id} tx={e} index={(page - 1) * pageSize + idx + 1}
+                    onEdit={openEdit} typeColors={typeColors} />
                 ))}
               </div>
             )}
@@ -647,7 +674,7 @@ const ExpenseInquiries = () => {
               <table className="min-w-max w-full">
                 <thead>
                   <tr style={{ background: "#f0f2f5", borderBottom: "2px solid #d1d5db" }}>
-                    {["#", "Tx ID", "Date", "Company", "Type", "Department", "Counterparty",
+                    {["#", "Transaction ID", "Date", "Company", "Type", "Country", "Department", "Counterparty",
                       "Description", "Account", "Amount", "Currency", "FX", "INR Amount"].map((h) => (
                         <th key={h} className="px-6 py-3.5 text-left whitespace-nowrap"
                           style={{ fontSize: 14, fontWeight: 700, color: "black", letterSpacing: "0.02em" }}>
@@ -658,23 +685,22 @@ const ExpenseInquiries = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {paginated.length === 0 ? (
-                    <tr><td colSpan={13}><EmptyState /></td></tr>
+                    <tr><td colSpan={14}><EmptyState /></td></tr>
                   ) : (
                     paginated.map((e, idx) => {
                       const rowNum = (page - 1) * pageSize + idx + 1;
                       const amtPos = e.amount > 0, amtNeg = e.amount < 0;
                       const inrPos = (e.inrAmount ?? 0) > 0, inrNeg = (e.inrAmount ?? 0) < 0;
-                      // ── use $lookup resolved symbol — falls back to value if not found ──
                       const sym = e.currencySymbol || "";
                       return (
                         <tr key={e._id}
-                          className="transition-colors duration-100 cursor-pointer"
+                          className="transition-colors duration-100 "
                           onClick={() => openEdit(e)}
                           onMouseEnter={(ev) => (ev.currentTarget.style.background = "#f9fafb")}
                           onMouseLeave={(ev) => (ev.currentTarget.style.background = "")}>
                           <td className="px-6 py-4 text-sm font-semibold tabular-nums" style={{ color: "#6b7280" }}>{rowNum}</td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
+                            <span className="text-sm font-bold   whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{fmtDate(e.date)}</td>
                           <td className="px-6 py-4">
@@ -682,6 +708,12 @@ const ExpenseInquiries = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Pill label={e.typeLabel || e.type} typeColors={typeColors} />
+                          </td>
+                          {/* ── Country column ── */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {(e.countryLabel || e.country)
+                              ? <CountryPill label={e.countryLabel || e.country} countryColors={countryColors} />
+                              : <span className="text-sm text-gray-400">—</span>}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{e.department || "—"}</td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{e.counterparty || "—"}</td>

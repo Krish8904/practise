@@ -197,7 +197,7 @@ const ExpenseExport = ({ data, fileName = "ExpenseInquiries" }) => {
   return (
     <div className="relative inline-block group shrink-0">
       {/* Export Button */}
-      <div >
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer" >
         Export
         <FileDown size={18} />
       </div>

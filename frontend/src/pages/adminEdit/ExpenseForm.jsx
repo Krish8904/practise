@@ -291,7 +291,28 @@ const ExpenseForm = ({ editData = null, onSuccess = null, onClose = null, defaul
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    if (editData) setFormData({ ...emptyForm, ...editData, sign: editData.amount < 0 ? -1 : 1, amount: Math.abs(editData.amount ?? 0) });
+    if (editData) {
+      // Helper to extract _id string from either a populated object or raw string
+      const getId = (val) => {
+        if (!val) return "";
+        if (typeof val === "object" && val._id) return String(val._id);
+        return String(val);
+      };
+
+      // Fix date format: strip time portion
+      const rawDate = editData.date ? String(editData.date).split("T")[0] : emptyForm.date;
+
+      setFormData({
+        ...emptyForm,
+        ...editData,
+        date: rawDate,
+        type: getId(editData.type),
+        country: getId(editData.country),
+        currency: getId(editData.currency),
+        sign: editData.amount < 0 ? -1 : 1,
+        amount: Math.abs(editData.amount ?? 0),
+      });
+    }
   }, [editData]);
 
   useEffect(() => {
@@ -334,12 +355,12 @@ const ExpenseForm = ({ editData = null, onSuccess = null, onClose = null, defaul
     try {
       const amt = parseFloat(formData.amount);
       if (!formData.company?.trim()) throw new Error("Company is required.");
-      if (!formData.type?.trim()) throw new Error("Type is required.");
+      if (!formData.type || !String(formData.type).trim()) throw new Error("Type is required.");
       if (!formData.date) throw new Error("Date is required.");
       if (isNaN(amt) || amt <= 0) throw new Error("Please enter a valid amount.");
       const payload = {
         date: formData.date, month: formData.month, country: formData.country,
-        company: formData.company.trim(), type: formData.type.trim(),
+        company: formData.company.trim(), type: formData.type,
         department: formData.department?.trim() || undefined,
         counterparty: formData.counterparty?.trim() || undefined,
         description: formData.description?.trim() || undefined,
