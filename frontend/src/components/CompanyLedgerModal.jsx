@@ -105,7 +105,7 @@ const CompanyLedgerModal = ({ company, allExpenses, onClose, sourceExpense }) =>
     "border-b-red-500",
     "border-b-emerald-500",
     closingBalance < 0 ? "border-b-red-500" : "border-b-slate-800",
-  ];
+  ];  
 
   const cards = [
     { label: "Previous Balance", value: previousBalance },
@@ -132,12 +132,12 @@ const CompanyLedgerModal = ({ company, allExpenses, onClose, sourceExpense }) =>
       <div
         ref={overlayRef}
         onClick={handleOverlay}
-        className="fixed inset-0 z-[1000] flex items-center justify-center p-5 bg-slate-900/50 backdrop-blur-sm"
+        className="fixed inset-0 z-1000 flex items-center justify-center p-5 bg-slate-900/50 backdrop-blur-sm"
       >
-        <div className="bg-white w-full max-w-[1200px] h-full max-h-[93vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden rounded-sm">
+        <div className="bg-white w-full max-w-[1200px] h-full max-h-[93vh] flex flex-col  shadow-2xl overflow-hidden rounded-sm">
 
           {/* ── HEADER ── */}
-          <div className="flex items-center justify-between px-6 border-b border-slate-700 bg-slate-900 flex-shrink-0" style={{ height: 52 }}>
+          <div className="flex items-center justify-between px-6 border-b border-slate-700 bg-slate-800 shrink-0" style={{ height: 52 }}>
             <div className="flex w-full items-center gap-3">
               <BookOpen size={15} className="text-slate-400" />
               <span className="text-slate-100 text-[13px] font-semibold tracking-wide">
@@ -292,7 +292,8 @@ const CompanyLedgerModal = ({ company, allExpenses, onClose, sourceExpense }) =>
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-500 font-poppins whitespace-nowrap">{fmtDate(row.date)}</td>
                         <td className="px-4 py-3 text-xs text-slate-500 max-w-[220px]">
-                          <span className="block truncate" title={row.description}>{row.description || "—"}</span>
+                          <span className="block truncate" title=
+                          {row.description}>{row.description || "—"}</span>
                         </td>
                         <td className="px-4 py-3">
                           {(row.typeLabel || row.type) ? (

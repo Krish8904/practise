@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  X, Search, ChevronDown, Check,
+  X, ChevronDown, Check,
   TrendingUp, TrendingDown, SlidersHorizontal,
 } from "lucide-react";
 
@@ -20,6 +20,9 @@ export const DEFAULT_FILTERS = {
 
 function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset }) {
   const overlayRef = useRef(null);
+  const [expanded, setExpanded] = useState({});
+
+  const toggle = (key) => setExpanded((p) => ({ ...p, [key]: !p[key] }));
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -29,14 +32,14 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
   function uniqueVals(key) {
     return [...new Set(expenses.map((e) => {
       switch (key) {
-        case "company": return e.company;
-        case "department": return e.department;
+        case "company":      return e.company;
+        case "department":   return e.department;
         case "counterparty": return e.counterparty;
-        case "account": return e.account;
-        case "type": return e.typeLabel;
-        case "country": return e.countryLabel;
-        case "currency": return e.currencyLabel;
-        default: return null;
+        case "account":      return e.account;
+        case "type":         return e.typeLabel;
+        case "country":      return e.countryLabel;
+        case "currency":     return e.currencyLabel;
+        default:             return null;
       }
     }).filter(Boolean))];
   }
@@ -52,43 +55,78 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
   }, 0);
 
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400 transition placeholder-gray-400";
-  const labelCls = "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2";
+  const labelCls = "block text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2";
 
-  const MultiSelect = ({ label, optionKey }) => {
+  // Collapsible multi-select section
+  const CollapsibleMulti = ({ label, optionKey }) => {
     const opts = uniqueVals(optionKey);
     const selected = filters[optionKey] || [];
+    const isOpen = expanded[optionKey];
     if (!opts.length) return null;
+
     return (
-      <div>
-        <p className={labelCls}>{label}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {opts.map((opt) => {
-            const active = selected.includes(opt);
-            return (
+      <div className="border  border-gray-200 rounded-lg overflow-hidden">
+        {/* Trigger row */}
+        <button
+          onClick={() => toggle(optionKey)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">{label}</span>
+            {selected.length > 0 && (
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">
+                {selected.length}
+              </span>
+            )}
+          </div>
+          <ChevronDown
+            size={15}
+            className={`text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {/* Options panel */}
+        {isOpen && (
+          <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+            <div className="flex flex-wrap gap-1.5">
+              {opts.map((opt) => {
+                const active = selected.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => toggleMulti(optionKey, opt)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer"
+                    style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      background: active ? "#4F46E5" : "#ffffff",
+                      color: active ? "white" : "#374151",
+                      border: active ? "1px solid #4F46E5" : "1px solid #e5e7eb",
+                    }}
+                  >
+                    {active && <Check size={10} />}
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+            {selected.length > 0 && (
               <button
-                key={opt}
-                onClick={() => toggleMulti(optionKey, opt)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer"
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  background: active ? "#4F46E5" : "#f9fafb",
-                  color: active ? "white" : "#374151",
-                  border: active ? "1px solid #4F46E5" : "1px solid #e5e7eb",
-                }}
+                onClick={() => onChange({ ...filters, [optionKey]: [] })}
+                className="mt-2.5 text-[11px] text-red-400 hover:text-red-600 font-semibold cursor-pointer transition-colors"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
               >
-                {active && <Check size={10} />}
-                {opt}
+                Clear {label}
               </button>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div
           ref={overlayRef}
@@ -97,7 +135,6 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
         />
       )}
 
-      {/* Drawer */}
       <div
         className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out"
         style={{
@@ -132,9 +169,10 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
+          {/* Transaction ID */}
           <div>
             <label className={labelCls}>Transaction ID</label>
             <input
@@ -147,6 +185,7 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
             />
           </div>
 
+          {/* Company */}
           <div>
             <label className={labelCls}>Company</label>
             <div className="relative">
@@ -163,6 +202,7 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
             </div>
           </div>
 
+          {/* Date Range */}
           <div>
             <label className={labelCls}>Date Range</label>
             <div className="grid grid-cols-2 gap-3">
@@ -191,6 +231,7 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
             </div>
           </div>
 
+          {/* Direction */}
           <div>
             <label className={labelCls}>Direction</label>
             <div className="grid grid-cols-2 gap-2">
@@ -219,17 +260,18 @@ function FilterExpenseInq({ open, onClose, filters, onChange, expenses, onReset 
 
           <div className="h-px bg-gray-100" />
 
-          <MultiSelect label="Type" optionKey="type" />
-          <MultiSelect label="Country" optionKey="country" />
-          <MultiSelect label="Currency" optionKey="currency" />
-          <MultiSelect label="Department" optionKey="department" />
-          <MultiSelect label="Counterparty" optionKey="counterparty" />
-          <MultiSelect label="Account" optionKey="account" />
+          {/* Collapsible multi-selects */}
+          <CollapsibleMulti label="Type"         optionKey="type"         />
+          <CollapsibleMulti label="Country"      optionKey="country"      />
+          <CollapsibleMulti label="Currency"     optionKey="currency"     />
+          <CollapsibleMulti label="Department"   optionKey="department"   />
+          <CollapsibleMulti label="Counterparty" optionKey="counterparty" />
+          <CollapsibleMulti label="Account"      optionKey="account"      />
 
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 border-t border-gray-200 px-6 py-4 flex items-center gap-3 bg-gray-50">
+        <div className="shrink-0 border-t border-gray-200 px-6 py-4 flex items-center gap-3 bg-gray-50">
           <button
             onClick={onReset}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors cursor-pointer border-none"
