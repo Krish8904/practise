@@ -101,7 +101,7 @@ export default function AllLogs() {
       </div>
 
       {/* Logs Cards */}
-      <div className="max-h-[600px] overflow-y-auto space-y-4 pr-2">
+      <div className="max-h-150 overflow-y-auto space-y-4 pr-2">
         {filteredLogs.map((log, index) => (
           <div
             key={log._id || index} // fallback key

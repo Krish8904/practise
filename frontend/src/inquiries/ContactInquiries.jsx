@@ -153,7 +153,7 @@ const ContactInquiries = () => {
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
                       Message <span className="text-xl">↴</span>
                     </p>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line break-words">
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line wreap-break-word">
                       {item.message}
                     </p>
                   </div>

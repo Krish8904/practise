@@ -93,7 +93,7 @@ const AddSection = ({ onClose, onSectionAdded, pageName }) => {
 
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-start justify-end font-poppins text-left">
+    <div className="fixed inset-0 z-500 flex items-start justify-end font-poppins text-left">
       <div className="bg-white w-[77.5%] h-full shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
 
         {/* HEADER */}

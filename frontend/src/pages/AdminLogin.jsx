@@ -50,7 +50,7 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-[#f5f3ef] flex">
 
       {/* ── LEFT PANEL ── */}
-      <div className="hidden lg:flex flex-col justify-between w-[480px] shrink-0 bg-[#1a1a1a] p-12">
+      <div className="hidden lg:flex flex-col justify-between w-120 shrink-0 bg-[#1a1a1a] p-12">
         {/* logo */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-[#4a7c59] flex items-center justify-center">

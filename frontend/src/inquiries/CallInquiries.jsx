@@ -128,7 +128,7 @@ const CallInquiries = () => {
                   {/* Topic Section */}
                   <div className="mb-5 pb-5 border-b border-slate-100">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Discussion Topic <span className="text-xl">↴</span></p>
-                    <p className="text-slate-700 font-medium leading-relaxed break-words">{item.topic}</p>
+                    <p className="text-slate-700 font-medium leading-relaxed wrap-break-word">{item.topic}</p>
                   </div>
 
                   {/* Date & Time Section */}

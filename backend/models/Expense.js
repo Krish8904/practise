@@ -41,7 +41,6 @@ const expenseSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 👇 AUTO TRANSACTION ID (unchanged)
 expenseSchema.pre("save", async function () {
   if (this.transactionId) return;
 

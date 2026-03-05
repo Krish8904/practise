@@ -245,7 +245,7 @@ const CompanyInquiries = () => {
 
       {/* ── Sticky Header ── */}
       <div
-        className="bg-white border-b border-gray-200 sticky top-0 z-30"
+        className="bg-white border-b rounded border-gray-200 sticky top-0 z-30"
         style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}
       >
         <div className="w-full mx-auto px-5 py-3 flex flex-wrap items-center justify-between gap-4">
@@ -278,7 +278,7 @@ const CompanyInquiries = () => {
             </div>
           </div>
 
-          <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center flex-wrap gap-2">
             <SortCompanyInq
               search={search}
               onSearch={handleSearch}

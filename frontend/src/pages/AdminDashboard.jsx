@@ -501,7 +501,7 @@ export default function AdminDashboard() {
     const breadcrumbs = getBreadcrumbs();
 
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-600 mb-6">
+      <div className="flex items-center gap-2 text-xs text-slate-600 mb-4">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={index}>
             {index > 0 && <ChevronRight size={16} className="text-slate-400" />}
@@ -576,7 +576,7 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-3">
             <StatCard icon={<Briefcase size={24} />} value={stats.openRoles} label="Open Roles" color="from-blue-500 to-blue-600" delay={0} />
             <StatCard icon={<Wrench size={24} />} value={stats.services} label="Total Services" color="from-purple-500 to-purple-600" delay={100} />
             <StatCard icon={<Building2 size={24} />} value={stats.useCases} label="Total Use Cases" color="from-orange-500 to-orange-600" delay={200} />
@@ -672,7 +672,7 @@ export default function AdminDashboard() {
       />
 
       <div className="flex-1 overflow-auto">
-        <div className={`p-7 max-w-7xl mx-auto ${isCompanyPage ? "" : "p-8"}`}>
+        <div className={` max-w-7xl mx-auto ${isCompanyPage ? "" : "p-3"}`}>
           <Breadcrumb />
           {activeSection === 'overview' ? (
             <OverviewContent />

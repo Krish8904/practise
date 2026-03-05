@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import Map from "../components/Map";
 import { useNavigate } from "react-router-dom";
-import { PhoneCall, Building2, Mail, ArrowUpRight } from "lucide-react";
+import { PhoneCall, Building2, Mail, ArrowUpRight, Zap, Handshake, Sparkles } from "lucide-react";
 
 const Touch = () => {
   const navigate = useNavigate();
@@ -63,9 +63,10 @@ const Touch = () => {
   ];
 
   const stats = [
-    { emoji: "⚡", text: "Response within 24h" },
-    { emoji: "🤝", text: "500+ companies served" },
-    { emoji: "✦", text: "Free consultation" },
+    { icon: Zap, text: "Response within 24h" },
+    { icon: Handshake, text: "500+ companies served" },
+    { icon: Sparkles, text: "Free consultation" },
+
   ];
 
   return (
@@ -73,9 +74,8 @@ const Touch = () => {
       {/* Toast */}
       {notification && (
         <div
-          className={`fixed top-6 right-6 z-50 max-w-md p-4 rounded-xl shadow-2xl flex items-start gap-3 animate-[slideIn_0.3s_ease-out] ${
-            notification.type === "success" ? "bg-[#4a7c59] text-white" : "bg-red-500 text-white"
-          }`}
+          className={`fixed top-6 right-6 z-50 max-w-md p-4 rounded-xl shadow-2xl flex items-start gap-3 animate-[slideIn_0.3s_ease-out] ${notification.type === "success" ? "bg-[#4a7c59] text-white" : "bg-red-500 text-white"
+            }`}
         >
           <div className="shrink-0">
             {notification.type === "success" ? (
@@ -103,13 +103,13 @@ const Touch = () => {
       <div className="w-full mt-20 bg-[#f5f3ef] font-[DM_Sans,sans-serif]">
 
         {/* ── HERO ── */}
-        <div className="max-w-[1280px] mx-auto px-12 pt-20 pb-0">
+        <div className="max-w-7xl mx-auto px-12 pt-20 pb-0">
           <div className="grid grid-cols-[1.2fr_0.8fr] gap-10 items-end mb-10">
             <h1
-              className="text-[clamp(3rem,5.5vw,5rem)] font-light leading-[1.05] tracking-[-0.03em] text-[#1a1a1a] m-0"
+              className="text-[clamp(6rem,5.5vw,5rem)] pb-5 font-light leading-[1.05] tracking-[-0.03em] text-[#1a1a1a] m-0"
               style={{ fontFamily: "'poppins', serif" }}
             >
-              Get in <em className="not-italic italic text-[#4a7c59]">Touch</em>
+              Get in <em className="not-italic  text-[#4a7c59]">Touch</em>
             </h1>
             <div className="flex flex-col items-end gap-5 pb-1.5">
               <p className="text-sm text-[#888] leading-[1.75] font-light text-right max-w-[280px] m-0">
@@ -121,7 +121,8 @@ const Touch = () => {
                     key={s.text}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-[#555] bg-white border border-[#d4d0c8]"
                   >
-                    <span>{s.emoji}</span>{s.text}
+                    <s.icon size={14}  className="text-[#4a7c59] " />
+                    {s.text}
                   </span>
                 ))}
               </div>
@@ -162,7 +163,7 @@ const Touch = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[#4a7c59] tracking-wide uppercase">Get started</span>
-                  <div className="w-8 h-8 rounded-full border border-[#c8c4bc] flex items-center justify-center text-[#aaa] text-sm transition-all duration-[250ms] -rotate-45 scale-90 group-hover:bg-[#4a7c59] group-hover:text-white group-hover:border-[#4a7c59] group-hover:rotate-0 group-hover:scale-100">
+                  <div className="w-8 h-8 rounded-full border border-[#c8c4bc] flex items-center justify-center text-[#aaa] text-sm transition-all duration-250 -rotate-45 scale-90 group-hover:bg-[#4a7c59] group-hover:text-white group-hover:border-[#4a7c59] group-hover:rotate-0 group-hover:scale-100">
                     →
                   </div>
                 </div>
@@ -172,13 +173,13 @@ const Touch = () => {
         </div>
 
         {/* ── FORM ── */}
-        <div className="max-w-[1280px] mx-auto px-12 pt-20 pb-0">
+        <div className="max-w-7xl mx-auto px-12 pt-20 pb-0">
           <div className="flex items-end justify-between mb-12 pb-6 border-b border-[#d4d0c8]">
             <h2
               className="text-[clamp(1.8rem,3vw,2.6rem)] font-light tracking-[-0.02em] text-[#1a1a1a] m-0 leading-[1.1]"
               style={{ fontFamily: "'poppins', serif" }}
             >
-              Send us a <em className="not-italic italic text-[#4a7c59]">message</em>
+              Send us a <em className="not-italic  text-[#4a7c59]">message</em>
             </h2>
             <span className="text-xs text-[#aaa] tracking-[0.08em] uppercase font-medium pb-1">
               We reply within 24h
@@ -234,11 +235,10 @@ const Touch = () => {
               </div>
               <button
                 type="submit" disabled={isSubmitting}
-                className={`w-full flex items-center justify-center gap-3 text-[#f5f3ef] text-sm font-medium py-4 rounded-full transition-all duration-200 ${
-                  isSubmitting
-                    ? "bg-[#ccc] cursor-not-allowed"
-                    : "bg-[#1a1a1a] hover:bg-[#4a7c59] cursor-pointer hover:-translate-y-0.5 hover:shadow-lg"
-                }`}
+                className={`w-full flex items-center justify-center gap-3 text-[#f5f3ef] text-sm font-medium py-4 rounded-full transition-all duration-200 ${isSubmitting
+                  ? "bg-[#ccc] cursor-not-allowed"
+                  : "bg-[#1a1a1a] hover:bg-[#4a7c59] cursor-pointer hover:-translate-y-0.5 hover:shadow-lg"
+                  }`}
               >
                 {isSubmitting ? (
                   <>
@@ -259,12 +259,12 @@ const Touch = () => {
 
             {/* right side info */}
             <div className="pt-2">
-              <p className="text-xs text-[#4a7c59] font-medium tracking-[0.1em] uppercase mb-4">The opportunities are here</p>
+              <p className="text-xs text-[#4a7c59] font-medium tracking-widest uppercase mb-4">The opportunities are here</p>
               <p
                 className="text-[clamp(1.4rem,2.5vw,2rem)] font-light leading-[1.45] tracking-[-0.02em] text-[#1a1a1a] mb-8"
                 style={{ fontFamily: "'poppins', serif" }}
               >
-                So why <em className="not-italic italic text-[#4a7c59]">wait?</em>
+                So why <em className="not-italic  text-[#4a7c59]">wait?</em>
               </p>
               <ul className="list-none m-0 p-0">
                 {[
@@ -286,7 +286,7 @@ const Touch = () => {
         </div>
 
         {/* ── CTA STRIP ── */}
-        <div className="max-w-[1280px] mx-auto px-12 pt-16 pb-20 grid grid-cols-[auto_1fr] gap-6 items-stretch">
+        <div className="max-w-7xl mx-auto px-12 pt-16 pb-20 grid grid-cols-[auto_1fr] gap-6 items-stretch">
           <button
             onClick={() => navigate("/call")}
             className="inline-flex items-center gap-2.5 bg-[#1a1a1a] hover:bg-[#4a7c59] text-[#f5f3ef] border-none px-8 rounded-2xl text-sm font-medium cursor-pointer whitespace-nowrap transition-all duration-200"
@@ -295,7 +295,7 @@ const Touch = () => {
           </button>
           <div className="bg-[#1a1a1a] rounded-2xl px-12 py-10 flex items-center justify-between gap-8 relative overflow-hidden">
             <div
-              className="absolute top-[-40px] right-[-40px] w-44 h-44 rounded-full pointer-events-none"
+              className="absolute -top-10 -right-10 w-44 h-44 rounded-full pointer-events-none"
               style={{ background: "radial-gradient(circle, rgba(74,124,89,0.35) 0%, transparent 70%)" }}
             />
             <div className="relative z-10">

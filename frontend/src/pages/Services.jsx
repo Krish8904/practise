@@ -75,61 +75,120 @@ const Services = () => {
           if (key === "services") {
             const services = section.items || [];
             return (
-              <section key={key} className="max-w-7xl mx-auto px-12 pt-4 pb-10">
-                <div className="flex items-end justify-between mb-12 pb-6 border-b border-[#d4d0c8]">
-                  <h2
-                    className="text-[clamp(1.8rem,3vw,2.8rem)] font-light tracking-[-0.02em] text-[#1a1a1a] m-0 leading-[1.1]"
-                    style={{ fontFamily: "'poppins', serif" }}
-                  >
-                    Our Services <em className="not-italic  text-[#4a7c59]">&amp;</em> Works
-                  </h2>
-                  <span className="text-[0.8rem] text-[#aaa] tracking-[0.08em] uppercase font-medium pb-1">
-                    {String(services.length).padStart(2, "0")} Services
-                  </span>
-                </div>
-                <ul className="list-none m-0 p-0">
-                  {services.map((item, i) => (
-                    <li
-                      key={i}
-                      className="grid items-center gap-7 px-4 py-5 border-b border-[#d4d0c8] rounded-xl  transition-all duration-200 hover:bg-[#eceae4] hover:pl-6 first:border-t first:border-[#d4d0c8] group"
-                      style={{ gridTemplateColumns: "60px 1fr 1fr auto auto" }}
-                      onMouseEnter={() => setHoveredService(i)}
-                      onMouseLeave={() => setHoveredService(null)}
+              <section key={key} className="max-w-7xl mx-auto px-12 pt-8 pb-16">
+
+                {/* ── Header ── */}
+                <div className="flex items-end justify-between mb-12">
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#4a7c59] font-bold mb-3">
+                      What we do
+                    </p>
+                    <h2
+                      className="text-[clamp(2.4rem,4.5vw,4rem)] font-light tracking-[-0.03em] text-[#1a1a1a] m-0 leading-[1]"
+                      style={{ fontFamily: "'Poppins', serif" }}
                     >
-                      <span
-                        className="text-[0.8rem] text-[#c0bbb0] font-light text-right transition-colors duration-200 group-hover:text-[#4a7c59]"
-                        style={{ fontFamily: "'poppins', serif" }}
+                      Services <em className="not-italic text-[#4a7c59]">&</em><br />Works
+                    </h2>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 pb-1">
+                    <span className="text-[3rem] font-extralight text-[#e0ddd6] leading-none tabular-nums">
+                      {String(services.length).padStart(2, "0")}
+                    </span>
+                    <span className="text-[0.65rem] uppercase tracking-[0.15em] text-[#bbb] font-semibold">
+                      Total Services
+                    </span>
+                  </div>
+                </div>
+
+                {/* ── Magazine grid ── */}
+                <div
+                  className="grid gap-14"
+                  style={{
+                    gridTemplateColumns: "repeat(12, 1fr)",
+                    gridAutoRows: "180px",
+                  }}
+                >
+                  {services.map((item, i) => {
+                    // Tile sizing pattern — cycles every 5 items
+                    const pattern = i % 5;
+                    let colSpan, rowSpan;
+                    if (pattern === 0) { colSpan = "span 7"; rowSpan = "span 2"; }      // big left
+                    else if (pattern === 1) { colSpan = "span 5"; rowSpan = "span 1"; } // small right top
+                    else if (pattern === 2) { colSpan = "span 5"; rowSpan = "span 1"; } // small right bottom
+                    else if (pattern === 3) { colSpan = "span 5"; rowSpan = "span 2"; } // big right
+                    else { colSpan = "span 7"; rowSpan = "span 1"; }                    // wide left
+
+                    const isBig = rowSpan === "span 2";
+
+                    return (
+                      <div
+                        key={i}
+                        className="group relative overflow-hidden rounded-2xl cursor-pointer"
+                        style={{ gridColumn: colSpan, gridRow: rowSpan }}
                       >
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span
-                        className="text-[clamp(1.1rem,2vw,1.5rem)] font-normal text-[#1a1a1a] tracking-[-0.015em] transition-colors duration-200 group-hover:text-[#4a7c59] whitespace-nowrap"
-                        style={{ fontFamily: "'poppins', serif" }}
-                      >
-                        {item.title}
-                      </span>
-                      <span className="text-[0.875rem] text-[#999] leading-[1.65] font-light max-w-85">
-                        {item.desc}
-                      </span>
-                      <img
-                        src={
-                          item.image
-                            ? `${import.meta.env.VITE_API_URL}${item.image.startsWith("/") ? "" : "/uploads/"}${item.image}`
-                            : "/placeholder.png"
-                        }
-                        alt={item.title}
-                        className="w-25 h-17 rounded-lg object-cover bg-[#ddd] shrink-0 opacity-0 scale-95 translate-y-1 transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0"
-                      />
-                      <Link
-                        to="/contact"
-                        aria-label={`Go to ${item.title}`}
-                        className="w-11 h-11 rounded-full border border-[#c8c4bc] bg-transparent text-[#999] flex items-center justify-center text-base shrink-0 no-underline transition-all duration-250 ease-[cubic-bezier(0.34,1.56,0.64,1)] -rotate-45 scale-90 group-hover:bg-[#4a7c59] group-hover:text-[#f5f3ef] group-hover:border-[#4a7c59] group-hover:rotate-0 group-hover:scale-100"
-                      >
-                        →
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                        {/* Background image */}
+                        <img
+                          src={
+                            item.image
+                              ? `${import.meta.env.VITE_API_URL}${item.image.startsWith("/") ? "" : "/uploads/"}${item.image}`
+                              : "/placeholder.png"
+                          }
+                          alt={item.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+
+                        {/* Base overlay — always visible */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d]/30 to-transparent opacity-80" />
+
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-[#4a7c59]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+
+                        {/* Index — top left */}
+                        <span
+                          className="absolute top-4 left-5 text-[0.65rem] font-bold tracking-[0.15em] text-white/40 uppercase group-hover:text-white/70 transition-colors duration-300"
+                          style={{ fontFamily: "'Poppins', serif" }}
+                        >
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+
+                        {/* Arrow — top right, appears on hover */}
+                        <Link
+                          to="/contact"
+                          aria-label={`Go to ${item.title}`}
+                          className="absolute top-4 right-4 w-8 h-8 rounded-full border border-white/30 bg-white/10 text-white flex items-center justify-center no-underline opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                          style={{ fontSize: "0.85rem" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          →
+                        </Link>
+
+                        {/* Content — bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                          <h3
+                            className="text-white font-medium tracking-[-0.01em] m-0 leading-tight mb-1"
+                            style={{
+                              fontFamily: "'Poppins', serif",
+                              fontSize: isBig ? "clamp(1.1rem,2vw,1.5rem)" : "clamp(0.9rem,1.5vw,1.1rem)",
+                            }}
+                          >
+                            {item.title}
+                          </h3>
+
+                          {/* Description — only shows on big tiles or on hover for small */}
+                          <p
+                            className={`text-white/70 text-[0.78rem] leading-[1.6] font-light m-0 transition-all duration-300
+                    ${isBig
+                                ? "max-h-20 opacity-100"
+                                : "max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100"
+                              }`}
+                          >
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </section>
             );
           }

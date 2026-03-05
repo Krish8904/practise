@@ -128,7 +128,7 @@ function CompanyCard({ company, index, onEdit }) {
               style={{ color: S.category.accent }}
             >
               <Globe size={11} />
-              <span className="truncate max-w-[180px]">{c.website}</span>
+              <span className="truncate max-w-45">{c.website}</span>
             </a>
           )}
         </div>

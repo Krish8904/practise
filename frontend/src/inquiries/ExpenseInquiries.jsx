@@ -1,18 +1,16 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import axios from "axios";
-import { useOutletContext } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import {
   Receipt, X, ChevronLeft, ChevronRight, LayoutGrid, Table,
   FilePlus, Search, ArrowUpDown, ChevronDown, Check,
-  TrendingUp, TrendingDown, Minus,
-  ReceiptIcon,
+  TrendingUp, TrendingDown, Minus, BookOpen, FolderCog, SlidersHorizontal
 } from "lucide-react";
+import FilterExpenseInq, { DEFAULT_FILTERS } from "../utils/FilterExpenseInq";
 import ExpenseForm from "../pages/adminEdit/ExpenseForm";
 import { ExpenseCard } from "./ExpenseCards";
 import ExpenseExport from "../utils/ExpenseExport";
-
-
+import CompanyLedgerModal from "../components/CompanyLedgerModal";
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const toStr = (v) => {
@@ -51,9 +49,7 @@ const COLOR_PALETTE = [
 
 function buildTypeColors(expenses) {
   const colorMap = { ...STATIC_TYPE_COLORS };
-  const unknown = [
-    ...new Set(expenses.map((e) => e.typeLabel || e.type).filter(Boolean))
-  ].filter((t) => !colorMap[t]);
+  const unknown = [...new Set(expenses.map((e) => e.typeLabel || e.type).filter(Boolean))].filter((t) => !colorMap[t]);
   unknown.forEach((t, i) => { colorMap[t] = COLOR_PALETTE[i % COLOR_PALETTE.length]; });
   return colorMap;
 }
@@ -90,7 +86,6 @@ function Pill({ label, typeColors }) {
   );
 }
 
-
 function CountryPill({ label, countryColors }) {
   const c = countryColors?.[label] ?? { bg: "#e9ebee", text: "#1a202c", border: "#c1c7d0" };
   return (
@@ -100,7 +95,6 @@ function CountryPill({ label, countryColors }) {
     </span>
   );
 }
-
 
 function SignIcon({ amount }) {
   if (amount > 0) return <TrendingUp size={13} style={{ color: "#16a34a" }} />;
@@ -211,239 +205,21 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
   );
 }
 
-/* ─── Filter ─────────────────────────────────────────────────── */
-const DEFAULT_FILTERS = {
-  transactionId: [],
-  company: [],
-  department: [],
-  counterparty: [],
-  account: [],
-  type: [],
-  country: [],
-  currency: [],
-  sign: "",
-  fx: [],
-  date: "",
-  dateFrom: "",
-  dateTo: "",
-};
-function FilterBar({ filters, onChange, expenses }) {
-  const [open, setOpen] = useState(false);
-  const [activeGroup, setActiveGroup] = useState("type");
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-
-  function uniqueValsFromNested(key) {
-    return [
-      ...new Set(
-        expenses
-          .map((e) => {
-            switch (key) {
-              case "transactionId": return e.transactionId;
-              case "company": return e.company;
-              case "department": return e.department;
-              case "counterparty": return e.counterparty;
-              case "account": return e.account;
-              case "type": return e.typeLabel;
-              case "country": return e.countryLabel;
-              case "currency": return e.currencyLabel;
-              case "fx": return e.fx;
-              default: return null;
-            }
-          })
-          .filter(Boolean)
-      )
-    ];
-  }
-
-  const OPTIONS = {
-    transactionId: uniqueValsFromNested("transactionId"),
-    company: uniqueValsFromNested("company"),
-    department: uniqueValsFromNested("department"),
-    counterparty: uniqueValsFromNested("counterparty"),
-    account: uniqueValsFromNested("account"),
-    type: uniqueValsFromNested("type"),
-    country: uniqueValsFromNested("country"),
-    currency: uniqueValsFromNested("currency"),
-    fx: uniqueValsFromNested("fx"),
-    sign: ["Income / Credit", "Expense / Debit"],
-  };
-
-  const GROUPS = [
-    { key: "transactionId", label: "Transaction ID" },
-    { key: "company", label: "Company" },
-    { key: "department", label: "Department" },
-    { key: "counterparty", label: "Counterparty" },
-    { key: "account", label: "Account" },
-    { key: "type", label: "Type" },
-    { key: "country", label: "Country" },
-    { key: "currency", label: "Currency" },
-    { key: "sign", label: "Direction" },
-    { key: "fx", label: "FX Rate" },
-    { key: "date", label: "Date" },
-  ];
-
-  const totalActive = Object.entries(filters).reduce((n, [, v]) =>
-    n + (Array.isArray(v) ? v.length : v ? 1 : 0), 0);
-
-  const toggle = (gk, val) => {
-    if (gk === "sign") { onChange({ ...filters, sign: filters.sign === val ? "" : val }); return; }
-    if (gk === "date") return;
-    const cur = filters[gk] || [];
-    onChange({ ...filters, [gk]: cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val] });
-  };
-  const clearAll = () => onChange({ ...DEFAULT_FILTERS });
-  const isChecked = (gk, val) => gk === "sign" ? filters.sign === val : (filters[gk] || []).includes(val);
-
-  const dateCount = (filters.date ? 1 : 0) + (filters.dateFrom ? 1 : 0) + (filters.dateTo ? 1 : 0);
-  const hasAnyDate = filters.date || filters.dateFrom || filters.dateTo;
-  const clearDates = () => onChange({ ...filters, date: "", dateFrom: "", dateTo: "" });
-
-  return (
-    <div className="relative shrink-0" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap cursor-pointer"
-        style={{
-          fontFamily: "'Poppins', sans-serif",
-          background: totalActive > 0 ? "#dbeafe" : "white",
-          color: totalActive > 0 ? "#1e3a8a" : "#374151",
-          border: totalActive > 0 ? "1px solid #93c5fd" : "1px solid #d1d5db",
-        }}>
-        Filter
-        {totalActive > 0 && (
-          <span className="inline-flex items-center justify-center rounded-full text-xs font-bold"
-            style={{ width: 18, height: 18, background: "#1e3a8a", color: "white", fontSize: 10 }}>
-            {totalActive}
-          </span>
-        )}
-        <ChevronDown size={13} style={{ opacity: 0.6 }} />
-      </button>
-
-      {open && (
-        <div className="absolute left-0 mt-1 bg-white rounded-xl border border-gray-200 z-30 flex overflow-hidden"
-          style={{ minWidth: 420, maxHeight: 440, boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}>
-
-          <div className="border-r border-gray-100 py-2 flex flex-col" style={{ minWidth: 140 }}>
-            {totalActive > 0 && (
-              <button onClick={clearAll}
-                className="mx-2 mb-1 flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-lg transition"
-                style={{ fontFamily: "'Poppins', sans-serif" }}>
-                <X size={12} /> Clear all
-              </button>
-            )}
-            {GROUPS.map((g) => {
-              const count = g.key === "date"
-                ? dateCount
-                : Array.isArray(filters[g.key]) ? filters[g.key].length : (filters[g.key] ? 1 : 0);
-              const isActive = activeGroup === g.key;
-              return (
-                <button key={g.key} onClick={() => setActiveGroup(g.key)}
-                  className="flex items-center justify-between px-3 py-2 text-sm font-medium transition-all text-left"
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    background: isActive ? "#ede9fe" : "transparent",
-                    color: isActive ? "#3730a3" : "#374151",
-                    borderRight: isActive ? "2px solid #7c3aed" : "2px solid transparent",
-                  }}>
-                  <span>{g.label}</span>
-                  {count > 0 && (
-                    <span className="inline-flex items-center justify-center rounded-full text-xs font-bold"
-                      style={{ width: 18, height: 18, background: "#7c3aed", color: "white", fontSize: 10 }}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-2 px-2">
-            {activeGroup === "date" ? (
-              <div className="px-2 py-2 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}>Filter by date</label>
-                  {hasAnyDate && (
-                    <button onClick={clearDates}
-                      className="text-xs font-semibold text-red-500 hover:text-red-700 transition"
-                      style={{ fontFamily: "'Poppins', sans-serif" }}>
-                      Clear all
-                    </button>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>Exact date</p>
-                  <input type="date" value={filters.date || ""}
-                    onChange={(e) => onChange({ ...filters, date: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
-                    style={{ fontFamily: "'Poppins', sans-serif" }} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs text-gray-300 font-medium" style={{ fontFamily: "'Poppins', sans-serif" }}>or range</span>
-                  <div className="flex-1 h-px bg-gray-100" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>From</p>
-                  <input type="date" value={filters.dateFrom || ""}
-                    max={filters.dateTo || undefined}
-                    onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
-                    style={{ fontFamily: "'Poppins', sans-serif" }} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Poppins', sans-serif" }}>To</p>
-                  <input type="date" value={filters.dateTo || ""}
-                    min={filters.dateFrom || undefined}
-                    onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
-                    style={{ fontFamily: "'Poppins', sans-serif" }} />
-                </div>
-              </div>
-            ) : (
-              (OPTIONS[activeGroup] || []).map((opt) => {
-                const checked = isChecked(activeGroup, opt);
-                return (
-                  <button key={opt} onClick={() => toggle(activeGroup, opt)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-lg transition-all text-left"
-                    style={{
-                      fontFamily: "'Poppins', sans-serif",
-                      background: checked ? "#ede9fe" : "transparent",
-                      color: checked ? "#3730a3" : "#374151",
-                      fontWeight: checked ? 600 : 400,
-                    }}>
-                    <span className="inline-flex items-center justify-center rounded shrink-0"
-                      style={{ width: 16, height: 16, background: checked ? "#7c3aed" : "white", border: checked ? "1.5px solid #7c3aed" : "1.5px solid #d1d5db" }}>
-                      {checked && <Check size={10} color="white" strokeWidth={3} />}
-                    </span>
-                    {opt}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ─── Main page ──────────────────────────────────────────────── */
 const ExpenseInquiries = () => {
   const navigate = useNavigate();
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef(null);
   const [viewMode, setViewMode] = useState("table");
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [ledgerExpense, setLedgerExpense] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortValue, setSortValue] = useState(null);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [formDefaultTab, setFormDefaultTab] = useState("manual");
@@ -475,6 +251,16 @@ const ExpenseInquiries = () => {
     setPageSize(viewMode === "card" ? 6 : 10);
   }, [viewMode]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target)) {
+        setActionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const fetchExpenses = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/expenses");
@@ -499,48 +285,22 @@ const ExpenseInquiries = () => {
       )
       : [...expenses];
 
-    if (filters.type.length) list = list.filter((e) => filters.type.includes(e.typeLabel));
-    if (filters.country.length) list = list.filter((e) => filters.country.includes(e.countryLabel));
-    if (filters.currency.length) list = list.filter((e) => filters.currency.includes(e.currencyLabel));
+    if (filters.transactionId) list = list.filter((e) => toStr(e.transactionId).includes(filters.transactionId.toLowerCase()));
+    if (filters.company) list = list.filter((e) => e.company === filters.company);
+    if (filters.type?.length) list = list.filter((e) => filters.type.includes(e.typeLabel));
+    if (filters.country?.length) list = list.filter((e) => filters.country.includes(e.countryLabel));
+    if (filters.currency?.length) list = list.filter((e) => filters.currency.includes(e.currencyLabel));
+    if (filters.department?.length) list = list.filter((e) => filters.department.includes(e.department));
+    if (filters.counterparty?.length) list = list.filter((e) => filters.counterparty.includes(e.counterparty));
+    if (filters.account?.length) list = list.filter((e) => filters.account.includes(e.account));
     if (filters.sign === "Income / Credit") list = list.filter((e) => e.amount > 0);
     if (filters.sign === "Expense / Debit") list = list.filter((e) => e.amount < 0);
-    if (filters.transactionId.length)
-      list = list.filter((e) => filters.transactionId.includes(e.transactionId));
-
-    if (filters.company.length)
-      list = list.filter((e) => filters.company.includes(e.company));
-
-    if (filters.department.length)
-      list = list.filter((e) => filters.department.includes(e.department));
-
-    if (filters.counterparty.length)
-      list = list.filter((e) => filters.counterparty.includes(e.counterparty));
-
-    if (filters.account.length)
-      list = list.filter((e) => filters.account.includes(e.account));
-
-    if (filters.fx.length)
-      list = list.filter((e) => filters.fx.includes(e.fx));
-
-    if (filters.date) {
-      list = list.filter((e) => {
-        if (!e.date) return false;
-        const d = new Date(e.date), sd = new Date(filters.date);
-        return d.getFullYear() === sd.getFullYear() &&
-          d.getMonth() === sd.getMonth() &&
-          d.getDate() === sd.getDate();
-      });
-    }
-
     if (filters.dateFrom) {
-      const from = new Date(filters.dateFrom);
-      from.setHours(0, 0, 0, 0);
+      const from = new Date(filters.dateFrom); from.setHours(0, 0, 0, 0);
       list = list.filter((e) => e.date && new Date(e.date) >= from);
     }
-
     if (filters.dateTo) {
-      const to = new Date(filters.dateTo);
-      to.setHours(23, 59, 59, 999);
+      const to = new Date(filters.dateTo); to.setHours(23, 59, 59, 999);
       list = list.filter((e) => e.date && new Date(e.date) <= to);
     }
 
@@ -557,30 +317,29 @@ const ExpenseInquiries = () => {
     return list;
   }, [expenses, search, filters, sortValue]);
 
+  const totalActive = Object.entries(filters).reduce((n, [k, v]) => {
+    if (k === "transactionId" || k === "company") return n + (v ? 1 : 0);
+    return n + (Array.isArray(v) ? v.length : v ? 1 : 0);
+  }, 0);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
   const showingFrom = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const showingTo = Math.min(page * pageSize, filtered.length);
 
   const { totalExpense, totalCredit } = useMemo(() => {
-    let expense = 0;
-    let credit = 0;
-
+    let expense = 0, credit = 0;
     filtered.forEach((e) => {
       const amt = e.inrAmount ?? 0;
-
       if (amt < 0) expense += Math.abs(amt);
       if (amt > 0) credit += amt;
     });
-
-    return {
-      totalExpense: expense,
-      totalCredit: credit,
-    };
+    return { totalExpense: expense, totalCredit: credit };
   }, [filtered]);
 
   const handleSearch = (v) => { setSearch(v); setPage(1); };
   const handleFilterChange = (f) => { setFilters(f); setPage(1); };
+  const handleFilterReset = () => { setFilters(DEFAULT_FILTERS); setPage(1); };
 
   const openImport = () => { setEditData(null); setFormDefaultTab("import"); setShowForm(true); };
   const openEdit = (row) => { setEditData(row); setFormDefaultTab("manual"); setShowForm(true); };
@@ -606,8 +365,7 @@ const ExpenseInquiries = () => {
         {search ? `No results for "${search}".` : "No data available."}
       </p>
       {search && (
-        <button onClick={() => handleSearch("")}
-          className="text-sm font-semibold hover:underline" style={{ color: ACCENT }}>
+        <button onClick={() => handleSearch("")} className="text-sm font-semibold hover:underline" style={{ color: ACCENT }}>
           Clear search
         </button>
       )}
@@ -648,36 +406,40 @@ const ExpenseInquiries = () => {
         />
       )}
 
+      {ledgerExpense && (
+        <CompanyLedgerModal
+          company={ledgerExpense.company}
+          allExpenses={expenses}
+          sourceExpense={ledgerExpense}
+          onClose={() => setLedgerExpense(null)}
+        />
+      )}
+
+      <FilterExpenseInq
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        filters={filters}
+        onChange={handleFilterChange}
+        expenses={expenses}
+        onReset={() => { handleFilterReset(); setFilterOpen(false); }}
+      />
+
       {/* ── Sticky header ── */}
-      <div
-        className="bg-white border-b border-gray-200 sticky top-0 z-30"
-        style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}
-      >
+      <div className="bg-white border-b rounded border-gray-200 sticky top-0 z-30"
+        style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
         <div className="w-full mx-auto px-5 py-3">
 
           <div className="flex items-start justify-between mb-3">
-
             {/* LEFT SIDE */}
             <div className="flex items-center gap-3 shrink-0">
-              <div
-                className="flex items-center justify-center rounded-xl bg-violet-600 shrink-0"
-                style={{ width: 42, height: 42 }}
-              >
+              <div className="flex items-center justify-center rounded-xl bg-violet-600 shrink-0" style={{ width: 42, height: 42 }}>
                 <Receipt size={21} className="text-white" />
               </div>
-
               <div>
-                <h1
-                  className="text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                >
+                <h1 className="text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   Expenses
                 </h1>
-
-                <p
-                  className="text-xs text-gray-400 font-medium whitespace-nowrap mt-0.5"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                >
+                <p className="text-xs text-gray-400 font-medium whitespace-nowrap mt-0.5" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   {viewMode === "table"
                     ? `Showing ${showingFrom}–${showingTo} of ${filtered.length} transactions`
                     : `${filtered.length} transactions`}
@@ -686,29 +448,25 @@ const ExpenseInquiries = () => {
             </div>
 
             <div className="flex flex-row items-end gap-2">
-
-
-              <div className="flex items-center gap-2">
-                <h1
-                  className={`text-sm underline  font-semibold ${totalCredit - totalExpense >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                    }`}
-                >
-                  Net {totalCredit - totalExpense >= 0 ? "Credit" : "Spend"}: ₹
-                  {fmt(Math.abs(totalCredit - totalExpense))}
-                </h1>
-                <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-lg">
-                  <TrendingDown size={16} className="text-red-600" />
-                  <span className="text-sm font-semibold text-red-600">
-                    ₹{fmt(totalExpense)}
-                  </span>
+              <div className="flex items-center gap-0.5">
+                <div className="flex flex-col items-end px-2.5 py-0.5 border-r border-gray-200">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Spend</span>
+                  <div className="flex items-center gap-0.5">
+                    <TrendingDown size={12} className="text-red-500" />
+                    <span className="text-sm font-semibold text-red-600">₹{fmt(totalExpense)}</span>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
-                  <TrendingUp size={16} className="text-green-600" />
-                  <span className="text-sm font-semibold text-green-600">
-                    ₹{fmt(totalCredit)}
+                <div className="flex flex-col items-end px-2.5 py-0.5 border-r border-gray-200">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Credit</span>
+                  <div className="flex items-center gap-0.5">
+                    <TrendingUp size={12} className="text-green-500" />
+                    <span className="text-sm font-semibold text-green-600">₹{fmt(totalCredit)}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end px-2.5 py-0.5">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Net</span>
+                  <span className={`text-sm font-bold ${totalCredit - totalExpense >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {totalCredit - totalExpense >= 0 ? "+" : "-"}₹{fmt(Math.abs(totalCredit - totalExpense))}
                   </span>
                 </div>
               </div>
@@ -716,73 +474,102 @@ const ExpenseInquiries = () => {
           </div>
 
           {/* SECOND ROW */}
-          <div className="flex items-center flex-wrap gap-3">
-
+          <div className="flex items-center flex-wrap gap-2">
             <SortBar
               search={search}
               onSearch={handleSearch}
               sortValue={sortValue}
-              onSort={(v) => {
-                setSortValue(v);
-                setPage(1);
-              }}
+              onSort={(v) => { setSortValue(v); setPage(1); }}
             />
-
-            <FilterBar
-              filters={filters}
-              onChange={handleFilterChange}
-              expenses={expenses}
-            />
-
             <div className="flex items-center ml-1.5 mr-1.5 bg-gray-100 rounded-lg p-1 shrink-0">
-              <button
-                onClick={() => setViewMode("table")}
+              <button onClick={() => setViewMode("table")}
                 className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   background: viewMode === "table" ? "white" : "transparent",
                   color: viewMode === "table" ? "#1e3a8a" : "#9ca3af",
-                  boxShadow:
-                    viewMode === "table"
-                      ? "0 1px 3px rgba(0,0,0,0.1)"
-                      : "none",
-                }}
-              >
-                <Table size={14} /> Table
+                  boxShadow: viewMode === "table" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}>
+                <Table size={16} />
               </button>
-
-              <button
-                onClick={() => setViewMode("card")}
+              <button onClick={() => setViewMode("card")}
                 className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   background: viewMode === "card" ? "white" : "transparent",
                   color: viewMode === "card" ? "#5b21b6" : "#9ca3af",
-                  boxShadow:
-                    viewMode === "card"
-                      ? "0 1px 3px rgba(0,0,0,0.1)"
-                      : "none",
-                }}
-              >
-                <LayoutGrid size={14} /> Cards
+                  boxShadow: viewMode === "card" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}>
+                <LayoutGrid size={16} />
               </button>
             </div>
-
-            <button
-              onClick={openImport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer"
-            >
-              <FilePlus size={16} /> Import
-            </button>
-
-            <ExpenseExport data={filtered} fileName="Expenses_Report" />
-
-            <button
-              onClick={() => navigate("/admin/manageexpense")}
-              className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer"
-            >
+            <button onClick={() => navigate("/admin/manageexpense")}
+              className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
               <Receipt size={18} /> Create
             </button>
+
+            <div className="ml-auto flex items-center gap-3">
+
+              {/* ACTIONS BUTTON */}
+              <div className="relative z-50" ref={actionsRef}>
+                <button
+                  onClick={() => setActionsOpen((v) => !v)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
+                  <FolderCog size={16} />
+                  Actions
+                  <ChevronDown size={14} />
+                </button>
+
+                {actionsOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                  >
+                    <button
+                      onClick={() => {
+                        openImport();
+                        setActionsOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 transition"
+                    >
+                      <FilePlus size={16} />
+                      Import
+                    </button>
+                    <div className="border-t border-gray-100" />
+                    <ExpenseExport data={filtered} fileName="Expenses_Report" />
+                  </div>
+                )}
+              </div>
+
+              {/* FILTER BUTTON */}
+              <button
+                onClick={() => setFilterOpen(true)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-xl border transition-all whitespace-nowrap cursor-pointer hover:shadow-md"
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  background: totalActive > 0 ? "#4F46E5" : "white",
+                  color: totalActive > 0 ? "white" : "#374151",
+                  border:
+                    totalActive > 0
+                      ? "1px solid #4F46E5"
+                      : "1px solid #d1d5db",
+                }}
+              >
+                <SlidersHorizontal size={15} />
+                Filter
+                {totalActive > 0 && (
+                  <span
+                    className="inline-flex items-center justify-center rounded-full text-xs font-bold bg-white text-indigo-600"
+                    style={{ width: 18, height: 18, fontSize: 10 }}
+                  >
+                    {totalActive}
+                  </span>
+                )}
+              </button>
+
+            </div>
           </div>
         </div>
       </div>
@@ -817,25 +604,24 @@ const ExpenseInquiries = () => {
 
       {/* ══ TABLE VIEW ══ */}
       {viewMode === "table" && (
-        <div className="max-w-[1700px] mx-auto py-6 px-2">
+        <div className="max-w-425 mx-auto py-6 px-2">
           <div className="bg-white rounded border border-gray-300 overflow-hidden"
             style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
             <div className="overflow-x-auto">
               <table className="min-w-max w-full">
                 <thead>
                   <tr style={{ background: "#f0f2f5", borderBottom: "2px solid #d1d5db" }}>
-                    {["#", "Transaction ID", "Date", "Company", "Type", "Country", "Department", "Counterparty",
-                      "Description", "Account", "Amount", "Currency", "FX", "INR Amount"].map((h) => (
-                        <th key={h} className="px-6 py-3.5 text-left whitespace-nowrap"
-                          style={{ fontSize: 14, fontWeight: 700, color: "black", letterSpacing: "0.02em" }}>
-                          {h}
-                        </th>
-                      ))}
+                    {["#", "Transaction ID", "Date", "Company", "Type", "Country", "Department", "Counterparty", "Description", "Account", "Amount", "Currency", "FX", "INR Amount", "Ledger"].map((h) => (
+                      <th key={h} className="px-6 py-3.5 text-left whitespace-nowrap"
+                        style={{ fontSize: 14, fontWeight: 700, color: "black", letterSpacing: "0.02em" }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {paginated.length === 0 ? (
-                    <tr><td colSpan={14}><EmptyState /></td></tr>
+                    <tr><td colSpan={15}><EmptyState /></td></tr>
                   ) : (
                     paginated.map((e, idx) => {
                       const rowNum = (page - 1) * pageSize + idx + 1;
@@ -844,13 +630,13 @@ const ExpenseInquiries = () => {
                       const sym = e.currencySymbol || "";
                       return (
                         <tr key={e._id}
-                          className="transition-colors duration-100 "
+                          className="transition-colors duration-100"
                           onClick={() => openEdit(e)}
                           onMouseEnter={(ev) => (ev.currentTarget.style.background = "#f9fafb")}
                           onMouseLeave={(ev) => (ev.currentTarget.style.background = "")}>
                           <td className="px-6 py-4 text-sm font-semibold tabular-nums" style={{ color: "#6b7280" }}>{rowNum}</td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-bold   whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
+                            <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{fmtDate(e.date)}</td>
                           <td className="px-6 py-4">
@@ -859,7 +645,6 @@ const ExpenseInquiries = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Pill label={e.typeLabel || e.type} typeColors={typeColors} />
                           </td>
-                          {/* ── Country column ── */}
                           <td className="px-6 py-4 whitespace-nowrap">
                             {(e.countryLabel || e.country)
                               ? <CountryPill label={e.countryLabel || e.country} countryColors={countryColors} />
@@ -892,6 +677,17 @@ const ExpenseInquiries = () => {
                                 ₹{fmt(Math.abs(e.inrAmount ?? 0))}
                               </span>
                             </div>
+                          </td>
+                          <td className="px-4 py-4" onClick={(ev) => ev.stopPropagation()}>
+                            <button
+                              onClick={(ev) => { ev.stopPropagation(); setLedgerExpense(e); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer"
+                              style={{ background: "#f5f3ff", color: "#4F46E5", border: "1px solid #c4b5fd" }}
+                              onMouseEnter={(ev) => { ev.currentTarget.style.background = "#4F46E5"; ev.currentTarget.style.color = "white"; }}
+                              onMouseLeave={(ev) => { ev.currentTarget.style.background = "#f5f3ff"; ev.currentTarget.style.color = "#4F46E5"; }}
+                            >
+                              <BookOpen size={12} /> Ledger
+                            </button>
                           </td>
                         </tr>
                       );

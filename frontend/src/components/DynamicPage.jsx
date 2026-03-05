@@ -133,7 +133,7 @@ const DynamicPage = () => {
 
         {/* CTA SECTION */}
         {cta.mainText && (
-          <div className="text-center space-y-6 p-10 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-50">
+          <div className="text-center space-y-6 p-10 bg-linear-to-r from-blue-50 to-white rounded-xl border border-blue-50">
             <h2 className="text-4xl font-bold text-gray-900">{cta.mainText}</h2>
             <p className="max-w-xl mx-auto text-gray-700">{cta.secondaryText}</p>
             <button className="bg-blue-600 text-white px-8 py-4 rounded-lg">

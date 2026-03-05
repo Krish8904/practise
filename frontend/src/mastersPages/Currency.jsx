@@ -107,7 +107,7 @@ export default function ExpenseCurrency() {
     <div className="p-8 bg-slate-50 min-h-screen">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-[100] px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium transition-all ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+        <div className={`fixed top-5 right-5 z-100 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium transition-all ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
           {toast.type === "success" ? "✓" : "✕"} {toast.message}
         </div>
       )}
@@ -179,7 +179,7 @@ export default function ExpenseCurrency() {
       {/* Create / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[440px] rounded-2xl p-6 shadow-xl">
+          <div className="bg-white w-110 rounded-2xl p-6 shadow-xl">
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold text-slate-800">{editingItem ? "Edit Currency" : "Add Currency"}</h2>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
@@ -207,7 +207,7 @@ export default function ExpenseCurrency() {
       {/* Delete Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[400px] rounded-2xl p-6 shadow-xl">
+          <div className="bg-white w-100 rounded-2xl p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-lg">🗑️</div>
               <h2 className="text-lg font-semibold text-slate-800">Delete Currency</h2>

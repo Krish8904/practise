@@ -233,7 +233,7 @@ export default function Category() {
             <div key={item._id} className="category-card bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-2.75 flex-1 min-w-0">
-                  <div className="w-9.5 h-9.5 rounded-2xl flex-shrink-0 bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                  <div className="w-9.5 h-9.5 rounded-2xl shrink-0 bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
                     <Globe size={16} className="text-blue-500" />
                   </div>
                   <div className="min-w-0">
@@ -249,7 +249,7 @@ export default function Category() {
                     </p>
                   </div>
                 </div>
-                <span className="ml-2 flex-shrink-0 text-xs font-semibold px-2.25 py-0.75 rounded-full bg-emerald-50 text-emerald-600 font-['DM_Mono'] tracking-[0.04em]">
+                <span className="ml-2 shrink-0 text-xs font-semibold px-2.25 py-0.75 rounded-full bg-emerald-50 text-emerald-600 font-['DM_Mono'] tracking-[0.04em]">
                   Active
                 </span>
               </div>
@@ -305,7 +305,7 @@ export default function Category() {
             </label>
             <input 
               autoFocus
-              className={`modal-input w-full px-3.5 py-2.75 text-sm rounded-2xl bg-white text-slate-900 transition-all ${error ? "border-red-400 !border-2 shadow-red-200/50" : "border-slate-200 border-2 shadow-sm hover:border-slate-300"}`}
+              className={`modal-input w-full px-3.5 py-2.75 text-sm rounded-2xl bg-white text-slate-900 transition-all ${error ? "border-red-400 border-2! shadow-red-200/50" : "border-slate-200 border-2 shadow-sm hover:border-slate-300"}`}
               value={name} 
               onChange={(e)=>{setName(e.target.value);setError("");}} 
               onKeyDown={handleKeyDown} 
@@ -314,7 +314,7 @@ export default function Category() {
             
             {error && (
               <div className="flex items-center gap-1.5 mt-2">
-                <AlertTriangle size={13} className="text-red-500 flex-shrink-0" />
+                <AlertTriangle size={13} className="text-red-500 shrink-0" />
                 <span className="text-xs text-red-500">{error}</span>
               </div>
             )}
