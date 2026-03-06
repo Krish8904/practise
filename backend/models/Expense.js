@@ -6,7 +6,6 @@ const expenseSchema = new mongoose.Schema(
     date: { type: Date, required: true },
     month: { type: Number },
 
-    // ✅ CHANGED: now references ExpenseCountry
     country: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ExpenseCountry",
@@ -14,7 +13,6 @@ const expenseSchema = new mongoose.Schema(
 
     company: { type: String, required: true },
 
-    // ✅ CHANGED: now references ExpenseType
     type: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ExpenseType",
@@ -28,7 +26,6 @@ const expenseSchema = new mongoose.Schema(
 
     amount: { type: Number, required: true },
 
-    // ✅ CHANGED: now references ExpenseCurrency
     currency: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ExpenseCurrency",
@@ -57,15 +54,8 @@ expenseSchema.pre("save", async function () {
     .filter((n) => n !== null)
     .sort((a, b) => a - b);
 
-  let nextNumber = 1;
+  const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
 
-  for (let i = 0; i < numbers.length; i++) {
-    if (numbers[i] !== i + 1) {
-      nextNumber = i + 1;
-      break;
-    }
-    nextNumber = numbers.length + 1;
-  }
 
   this.transactionId = `EXCP${String(nextNumber).padStart(5, "0")}`;
 });
