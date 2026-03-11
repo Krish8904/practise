@@ -514,7 +514,7 @@ const ExpenseInquiries = () => {
               <div className="relative z-50" ref={actionsRef}>
                 <button
                   onClick={() => setActionsOpen((v) => !v)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                 >
                   <FolderCog size={16} />
@@ -546,7 +546,7 @@ const ExpenseInquiries = () => {
               {/* FILTER BUTTON */}
               <button
                 onClick={() => setFilterOpen(true)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-xl border transition-all whitespace-nowrap cursor-pointer hover:shadow-md"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer hover:shadow-md"
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   background: totalActive > 0 ? "#4F46E5" : "white",
@@ -611,7 +611,7 @@ const ExpenseInquiries = () => {
                 <thead>
                   <tr style={{ background: "#f0f2f5", borderBottom: "2px solid #d1d5db" }}>
                     {["#", "Transaction ID", "Date", "Company", "Type", "Country", "Department", "Counterparty", "Description", "Account", "Amount", "Currency", "FX", "INR Amount", "Ledger"].map((h) => (
-                      <th key={h} className="px-6 py-3.5 text-left whitespace-nowrap"
+                      <th key={h} className="px-6 py-3.5 text-center  whitespace-nowrap"
                         style={{ fontSize: 14, fontWeight: 700, color: "black", letterSpacing: "0.02em" }}>
                         {h}
                       </th>
@@ -635,7 +635,7 @@ const ExpenseInquiries = () => {
                           onMouseLeave={(ev) => (ev.currentTarget.style.background = "")}>
                           <td className="px-6 py-4 text-sm font-semibold tabular-nums" style={{ color: "#6b7280" }}>{rowNum}</td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
+                            <span className="text-sm font-bold text-center whitespace-nowrap" style={{ color: "#3730a3", fontFamily: "monospace" }}>{e.transactionId}</span>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{fmtDate(e.date)}</td>
                           <td className="px-6 py-4">
@@ -654,7 +654,7 @@ const ExpenseInquiries = () => {
                           <td className="px-6 py-4 text-sm" style={{ color: "#6b7280", maxWidth: 220 }}>
                             <span className="block truncate" title={e.description}>{e.description || "—"}</span>
                           </td>
-                          <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>{e.account || "—"}</td>
+                          <td className="px-6 py-4 text-sm text-center font-medium whitespace-nowrap" style={{ color: "#374151" }}>{e.account || "—"}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               <SignIcon amount={e.amount} />
@@ -664,10 +664,10 @@ const ExpenseInquiries = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>
+                          <td className="px-6 py-4 text-center text-sm font-medium whitespace-nowrap" style={{ color: "#374151" }}>
                             {e.currencyLabel || e.currency || "—"}
                           </td>
-                          <td className="px-6 py-4 text-sm tabular-nums" style={{ color: "#6b7280" }}>{e.fx ?? 1}</td>
+                          <td className="px-6 py-4 text-sm text-center tabular-nums" style={{ color: "#6b7280" }}>{e.fx ?? 1}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               <SignIcon amount={e.inrAmount} />
@@ -680,7 +680,7 @@ const ExpenseInquiries = () => {
                           <td className="px-4 py-4" onClick={(ev) => ev.stopPropagation()}>
                             <button
                               onClick={(ev) => { ev.stopPropagation(); setLedgerExpense(e); }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg  border transition-all whitespace-nowrap cursor-pointer"
                               style={{ background: "#f5f3ff", color: "#4F46E5", border: "1px solid #c4b5fd" }}
                               onMouseEnter={(ev) => { ev.currentTarget.style.background = "#4F46E5"; ev.currentTarget.style.color = "white"; }}
                               onMouseLeave={(ev) => { ev.currentTarget.style.background = "#f5f3ff"; ev.currentTarget.style.color = "#4F46E5"; }}

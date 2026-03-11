@@ -112,7 +112,7 @@ const Touch = () => {
               Get in <em className="not-italic  text-[#4a7c59]">Touch</em>
             </h1>
             <div className="flex flex-col items-end gap-5 pb-1.5">
-              <p className="text-sm text-[#888] leading-[1.75] font-light text-right max-w-[280px] m-0">
+              <p className="text-sm text-[#888] leading-[1.75] font-light text-right max-w-70 m-0">
                 Our experts are always happy to discuss your challenge. Reach out and we'll connect you with the right person.
               </p>
               <div className="flex items-center gap-3 flex-wrap justify-end">
