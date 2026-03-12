@@ -687,13 +687,13 @@ const SectionEditor = ({ section, data, onClose, onSave }) => {
                         </div>
                         <div>
                           <label className="text-[9px] font-black text-slate-300 uppercase block mb-1">Detailed Description</label>
-                          <textarea className="w-full p-4 text-xs bg-white border border-slate-100 rounded-xl resize-none min-h-[120px] outline-none focus:border-blue-400 shadow-sm leading-relaxed" placeholder="Describe the responsibilities..." value={job.description} onChange={(e) => updateJob(ci, ji, 'description', e.target.value)} />
+                          <textarea className="w-full p-4 text-xs bg-white border border-slate-100 rounded-xl resize-none min-h-30 outline-none focus:border-blue-400 shadow-sm leading-relaxed" placeholder="Describe the responsibilities..." value={job.description} onChange={(e) => updateJob(ci, ji, 'description', e.target.value)} />
                         </div>
                       </div>
                     </div>
                   ))}
 
-                  <button onClick={() => addJob(ci)} className="border-4 border-dashed border-slate-50 rounded-[2rem] flex flex-col items-center justify-center p-12 text-slate-300 hover:text-blue-500 hover:border-blue-100 hover:bg-blue-50/50 transition-all duration-500 cursor-pointer">
+                  <button onClick={() => addJob(ci)} className="border-4 border-dashed border-slate-50 rounded-4xl flex flex-col items-center justify-center p-12 text-slate-300 hover:text-blue-500 hover:border-blue-100 hover:bg-blue-50/50 transition-all duration-500 cursor-pointer">
                     <span className="text-4xl font-light mb-2">+</span>
                     <span className="text-[11px] font-black uppercase tracking-widest">Append Position</span>
                   </button>
@@ -710,13 +710,13 @@ const SectionEditor = ({ section, data, onClose, onSave }) => {
             {(temp.mainText !== undefined || temp.title !== undefined) && (
               <div className="group">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-4 tracking-widest group-hover:text-blue-500 transition-colors">Primary Heading</label>
-                <input className="w-full p-6 bg-slate-50 border-none rounded-[1.5rem] text-3xl font-black outline-none focus:ring-8 focus:ring-blue-50 transition-all" value={temp.mainText || temp.title} onChange={(e) => setTemp({ ...temp, [temp.mainText !== undefined ? 'mainText' : 'title']: e.target.value })} />
+                <input className="w-full p-6 bg-slate-50 border-none rounded-3xl text-3xl font-black outline-none focus:ring-8 focus:ring-blue-50 transition-all" value={temp.mainText || temp.title} onChange={(e) => setTemp({ ...temp, [temp.mainText !== undefined ? 'mainText' : 'title']: e.target.value })} />
               </div>
             )}
             {(temp.secondaryText !== undefined || temp.text !== undefined) && (
               <div className="group">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-4 tracking-widest group-hover:text-blue-500 transition-colors">Supportive Text / Body</label>
-                <textarea className="w-full p-6 bg-slate-50 border-none rounded-[1.5rem] text-xl text-slate-600 leading-relaxed outline-none focus:ring-8 focus:ring-blue-50 transition-all" rows="6" value={temp.secondaryText || temp.text} onChange={(e) => setTemp({ ...temp, [temp.secondaryText !== undefined ? 'secondaryText' : 'text']: e.target.value })} />
+                <textarea className="w-full p-6 bg-slate-50 border-none rounded-3xl text-xl text-slate-600 leading-relaxed outline-none focus:ring-8 focus:ring-blue-50 transition-all" rows="6" value={temp.secondaryText || temp.text} onChange={(e) => setTemp({ ...temp, [temp.secondaryText !== undefined ? 'secondaryText' : 'text']: e.target.value })} />
               </div>
             )}
             {temp.buttonText !== undefined && (

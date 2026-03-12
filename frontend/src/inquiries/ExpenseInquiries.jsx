@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Receipt, X, ChevronLeft, ChevronRight, LayoutGrid, Table,
   FilePlus, Search, ArrowUpDown, ChevronDown, Check,
-  TrendingUp, TrendingDown, Minus, BookOpen, FolderCog, SlidersHorizontal
+  TrendingUp, TrendingDown, Minus, BookOpen, FolderCog, SlidersHorizontal,
 } from "lucide-react";
 import FilterExpenseInq, { DEFAULT_FILTERS } from "../utils/FilterExpenseInq";
 import ExpenseForm from "../pages/adminEdit/ExpenseForm";

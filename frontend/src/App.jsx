@@ -45,6 +45,7 @@ import Country from "./mastersPages/Country";
 import ExpenseCurrency from "./mastersPages/Currency";
 import MastersPage from "./mastersPages/MasterPage";
 import Settings from "./pages/Settings";
+import LegalEntities from "./pages/LegalEntities";
 
 
 function App() {
@@ -107,7 +108,7 @@ function App() {
           <Route path="inquiries/job" element={<JobInquiries />} />
           <Route path="expense-inquiries" element={<ExpenseInquiries />} />
           <Route path="settings" element={<Settings />} />
-
+          <Route path="legalentities" element={<LegalEntities />} />
           <Route path="logs" element={<Logs />} />
           <Route path="createcareer" element={<AddSection />} />
           <Route path="newsection" element={<NewSectionEditor />} />

@@ -66,8 +66,8 @@ const Footer = () => {
             <p className="text-xs text-[#4a7c59] font-medium tracking-widest uppercase mb-5">Contact</p>
             <ul className="list-none m-0 p-0 space-y-3">
               {[
-                { icon: Mail, text: "info@example.com" },
-                { icon: Phone, text: "99999 99999" },
+                { icon: Mail, text: "info@subduxion.com" },
+                { icon: Phone, text: "999 999 9999" },
                 { icon: MapPin, text: "High Tech Campus" },
               ].map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-2.5 text-[0.875rem] text-white/50 font-light">

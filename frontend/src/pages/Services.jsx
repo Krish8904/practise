@@ -198,12 +198,12 @@ const Services = () => {
             return (
               <div
                 key={key}
-                className="max-w-7xl mx-auto px-12 pt-6 pb-20 grid gap-6 items-stretch"
+                className="max-w-7xl mx-auto px-12 pt-6 pb-20 grid gap-3 items-stretch"
                 style={{ gridTemplateColumns: "auto 1fr" }}
               >
                 <button
                   onClick={() => navigate("/contact")}
-                  className="inline-flex items-center gap-2.5 bg-[#1a1a1a] hover:bg-[#4a7c59] text-[#f5f3ef] border-none px-8 rounded-2xl text-sm font-medium cursor-pointer whitespace-nowrap transition-all duration-200"
+                  className="inline-flex items-center gap-2.5 bg-[#1a1a1a] hover:bg-[#4a7c59] text-[#f5f3ef] border-none px-8 rounded-2xl  font-medium cursor-pointer whitespace-nowrap transition-all duration-200 text-md"
                 >
                   Book a Service ↗
                 </button>

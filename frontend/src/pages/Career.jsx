@@ -139,7 +139,7 @@ const Career = () => {
               </div>
               {data?.map((cat, ci) => (
                 <div key={ci} className="mb-14">
-                  <p className="font-fraunces text-base font-normal text-[#4a7c59] tracking-tight uppercase mb-5 flex items-center gap-3 after:flex-1 after:h-px after:bg-[#d4d0c8]">
+                  <p className="font-fraunces text-base font-normal text-[#4a7c59] tracking-tight uppercase mb-5 flex items-center gap-3 after:flex-1  after:bg-[#d4d0c8]">
                     {cat.category}
                   </p>
                   <ul className="list-none m-0 p-0">
@@ -200,7 +200,7 @@ const Career = () => {
         // ── CONTACT CTA ──
         if (type === "contactCTA") {
           return (
-            <div key={id} className="max-w-7xl mx-auto px-12 pt-15 pb-20 grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6 items-stretch">
+            <div key={id} className="max-w-7xl mx-auto px-12 pt-15 pb-20 grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 items-stretch">
               <button
                 className="inline-flex items-center gap-2.5 bg-[#1a1a1a] text-[#f5f3ef] border-none px-8 py-0 rounded-xl font-dm-sans text-sm font-medium cursor-pointer whitespace-nowrap transition-all duration-300 hover:bg-[#4a7c59] lg:py-4 lg:px-7"
                 onClick={() => navigate("/career/applyforjobs")}

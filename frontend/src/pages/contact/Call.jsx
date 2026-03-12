@@ -56,7 +56,7 @@ const Call = () => {
 
         {/* ── HERO ── */}
         <div className="max-w-7xl mx-auto px-12 pt-20 pb-0">
-          <div className="grid grid-cols-[1.2fr_0.8fr] gap-10 items-end mb-22">
+          <div className="grid grid-cols-[1.2fr_0.8fr] gap-10  items-end mb-22">
             <h1
               className="text-[clamp(3rem,5.5vw,5rem)] font-light leading-[1.05] tracking-[-0.03em] text-[#1a1a1a] m-0"
               style={{ fontFamily: "'Georgia', serif" }}
@@ -230,7 +230,7 @@ const Call = () => {
         </div>
 
         {/* ── CTA STRIP ── */}
-        <div className="max-w-7xl mx-auto px-12 pt-16 pb-20 grid grid-cols-[auto_1fr] gap-6 items-stretch">
+        <div className="max-w-7xl mx-auto px-12 pt-16 pb-20 grid grid-cols-[auto_1fr] gap-3 items-stretch">
           <button
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2.5 bg-[#1a1a1a] hover:bg-[#4a7c59] text-[#f5f3ef] border-none px-8 rounded-2xl text-sm font-medium cursor-pointer whitespace-nowrap transition-all duration-200"

@@ -127,7 +127,7 @@ export default function Home() {
           const statsArray = Array.isArray(section.steps) ? section.steps : [];
           return (
             <section key={id} className="max-w-7xl mx-auto px-12 pt-20 pb-0">
-              <div className="grid grid-cols-4 border border-[#d4d0c8] rounded-[20px] overflow-hidden">
+              <div className="grid grid-cols-4 border border-[#d4d0c8] rounded overflow-hidden">
                 {statsArray.map((stat, i) => (
                   <div key={i} className={`px-8 py-10 text-center ${i < statsArray.length - 1 ? "border-r border-[#d4d0c8]" : ""}`}>
                     <span

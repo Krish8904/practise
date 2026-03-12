@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import Company from "../models/Company.js";
+import LegalEntity from "../models/LegalEntity.js";
 
 const router = express.Router();
 
@@ -54,15 +55,50 @@ const lookupPipeline = [
   {
     $addFields: {
       natureOfBusiness: { $map: { input: "$natureOfBusiness", as: "n", in: "$$n.name" } },
-      channel: { $map: { input: "$channel", as: "c", in: "$$c.name" } },
-      category: { $arrayElemAt: [{ $map: { input: "$categoryArr", as: "c", in: "$$c.name" } }, 0] },
-      subcategory: { $map: { input: "$subcategory", as: "s", in: "$$s.name" } },
+      channel:          { $map: { input: "$channel",          as: "c", in: "$$c.name" } },
+      category:         { $arrayElemAt: [{ $map: { input: "$categoryArr", as: "c", in: "$$c.name" } }, 0] },
+      subcategory:      { $map: { input: "$subcategory",      as: "s", in: "$$s.name" } },
     },
   },
   { $unset: "categoryArr" },
   { $sort: { createdAt: -1 } },
 ];
 
+/* ─────────────────────────────────────────────
+   Helper: sync a saved company → LegalEntity
+   Runs after every POST (single + bulk).
+   country / currency ObjectIds come straight from
+   the saved company document if present.
+───────────────────────────────────────────── */
+async function syncLegalEntity(savedDoc) {
+  try {
+    if (!savedDoc?.companyName) return;
+    await LegalEntity.findOneAndUpdate(
+      { companyName: savedDoc.companyName.trim() },
+      {
+        $set: {
+          // Only set these when the company carries them;
+          // PUT /legal-entities/:id is used to enrich later.
+          country:         savedDoc.country         || null,
+          localCurrency:   savedDoc.localCurrency   || null,
+          foreignCurrency: savedDoc.foreignCurrency || null,
+        },
+        // Never overwrite richer data already stored on the entity
+        $setOnInsert: {
+          countryName:         "",
+          localCurrencyCode:   "",
+          foreignCurrencyCode: "",
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  } catch (err) {
+    // Non-fatal — log but don't fail the company request
+    console.warn("LegalEntity sync warning:", err.message);
+  }
+}
+
+/* ── GET all ── */
 router.get("/", async (req, res) => {
   try {
     const companies = await Company.aggregate(lookupPipeline);
@@ -72,10 +108,15 @@ router.get("/", async (req, res) => {
   }
 });
 
+/* ── POST single ── */
 router.post("/", async (req, res) => {
   try {
     const company = new Company(sanitizeBody(req.body));
-    const saved = await company.save();
+    const saved   = await company.save();
+
+    // Auto-create / update matching LegalEntity
+    await syncLegalEntity(saved);
+
     const [resolved] = await Company.aggregate([
       { $match: { _id: saved._id } },
       ...lookupPipeline,
@@ -87,6 +128,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+/* ── POST bulk ── */
 router.post("/bulk", async (req, res) => {
   try {
     const { companies } = req.body;
@@ -95,13 +137,14 @@ router.post("/bulk", async (req, res) => {
     const inserted = [];
     const errors   = [];
 
-    // Must use .save() one-by-one so the pre("save") hook
-    // fires and generates sequential companyId (CMP0001, CMP0002…)
     for (const company of companies) {
       try {
-        const doc = new Company(sanitizeBody(company));
+        const doc   = new Company(sanitizeBody(company));
         const saved = await doc.save();
         inserted.push(saved._id);
+
+        // Auto-create / update matching LegalEntity
+        await syncLegalEntity(saved);
       } catch (err) {
         errors.push(`${company.companyName ?? "Unknown"}: ${err.message}`);
       }
@@ -110,18 +153,18 @@ router.post("/bulk", async (req, res) => {
     console.log(`Inserted: ${inserted.length}, Failed: ${errors.length}`);
 
     res.status(201).json({
-      success: true,
+      success:       true,
       insertedCount: inserted.length,
       failedCount:   errors.length,
       errors,
     });
-
   } catch (err) {
     console.error("Bulk insert error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 });
 
+/* ── PUT ── */
 router.put("/:id", async (req, res) => {
   try {
     const updated = await Company.findByIdAndUpdate(
@@ -130,6 +173,7 @@ router.put("/:id", async (req, res) => {
       { new: true }
     );
     if (!updated) return res.status(404).json({ success: false, message: "Not found" });
+
     const [resolved] = await Company.aggregate([
       { $match: { _id: updated._id } },
       ...lookupPipeline,

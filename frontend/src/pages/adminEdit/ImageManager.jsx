@@ -192,15 +192,16 @@ const ImageManager = () => {
       {/* ── TOP BAR ── */}
       <div className="flex items-start justify-between mb-10">
         <div>
-          <p className="text-xs font-semibold text-slate-400 tracking-[0.2em] uppercase mb-2">
-            Content Management
+          <p className="text-xs font-semibold uppercase text-slate-400 tracking-wide  mb-2">
+            Content Management <span className="text-lg" >↴</span>
           </p>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Media Library</h1>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-400 mb-1">Total assets</p>
-          <p className="text-2xl font-black text-slate-900">
+          <p className="text-xs text-slate-400 mb-1">Total assets <span className="text-md pt-2" >↴</span> </p>
+          <p className="text-2xl font-bold text-slate-900">
             {filteredPages.reduce((acc, p) => acc + (p.sections ? extractImages(p.sections).length : 0), 0)}
+            
           </p>
         </div>
       </div>

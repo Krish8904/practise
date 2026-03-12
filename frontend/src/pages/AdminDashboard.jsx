@@ -149,6 +149,8 @@ export default function AdminDashboard() {
       setActiveInquiry('');
     } else if (path.startsWith('/admin/settings')) {
       setActiveSection('settings');
+    } else if (path.startsWith('/admin/legalentities')) {
+      setActiveSection('legalentities');
     }
   }, [location.pathname]);
 
@@ -477,6 +479,8 @@ export default function AdminDashboard() {
         crumbs.push({ label: 'Settings', action: null });
       } else if (activeSection === 'logs') {
         crumbs.push({ label: 'All Logs', action: null });
+      } else if (activeSection === 'legalentities') {
+        crumbs.push({ label: 'Legal Entites', action: null });
       } else if (activeSection === 'newcompany') {
         crumbs.push({ label: 'Companies', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Company Inquiries', action: null });

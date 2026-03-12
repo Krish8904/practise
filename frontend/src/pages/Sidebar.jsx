@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Target, ImagePlus } from 'lucide-react';
 import {
   LayoutDashboard, FileText, Briefcase, Users, TrendingUp, Settings,
-  ChevronDown, ChevronRight, Wrench, Building2, MessageSquare, BarChart3,
-  Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign,
+  ChevronDown, ChevronRight, Wrench, MessageSquare, BarChart3,
+  Bell, Save, Edit, Plus, Edit2, Trash2, X, Building2,  MapPin, Clock, DollarSign,
   MoreVertical, Menu, LogOut, User, LucidePhoneCall,
 } from 'lucide-react';
 
@@ -180,8 +180,8 @@ const Sidebar = ({
         {/* Companies */}
         <div className="relative">
           <NavItem
-            icon={<Building2 size={20} />}
-            label="Companies"
+            icon={<Users size={20} />}
+            label="Customers"
             active={activeSection === 'newcompany' || activeSection === 'expense-inquiries'}
             collapsed={sidebarCollapsed}
             onClick={() => setCompaniesExpanded(!companiesExpanded)}
@@ -214,7 +214,14 @@ const Sidebar = ({
           )}
         </div>
 
-        
+        <NavItem
+          icon={<Building2 size={20} />}
+          label="Legal Entities"
+          active={activeSection === 'legalentities'}
+          collapsed={sidebarCollapsed}
+          onClick={() => navigate('/admin/legalentities')}
+        />
+
         {/* Masters */}
         <NavItem
           icon={<Target size={20} />}

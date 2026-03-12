@@ -15,6 +15,7 @@ import masterRoutes from "./routes/masterRoutes.js"
 import expenseRoutes from "./routes/ExpenseRoutes.js"
 import ExpenseMasterRoutes from "./routes/ExpenseMasterRoutes.js"
 import invoiceCounter from "./routes/invoiceCounter.js"
+import legalentityRoutes from "./routes/legalentityRoutes.js"
 
 dotenv.config();
 
@@ -69,6 +70,8 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/expense-masters", ExpenseMasterRoutes);
 
 app.use("/api", invoiceCounter);
+
+app.use("/api/legal-entities", legalentityRoutes);  // ← add this
 
 
 // MongoDB connection
