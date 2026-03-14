@@ -5,6 +5,7 @@ import {
   Receipt, X, ChevronLeft, ChevronRight, LayoutGrid, Table,
   FilePlus, Search, ArrowUpDown, ChevronDown, Check,
   TrendingUp, TrendingDown, Minus, BookOpen, FolderCog, SlidersHorizontal,
+  Building2,
 } from "lucide-react";
 import FilterExpenseInq, { DEFAULT_FILTERS } from "../utils/FilterExpenseInq";
 import ExpenseForm from "../pages/adminEdit/ExpenseForm";
@@ -158,7 +159,7 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
         <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         <input type="text" placeholder="Search . . ." value={search}
           onChange={(e) => onSearch(e.target.value)}
-          className="w-full pl-8 pr-7 py-2 text-sm text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400 focus:bg-white transition"
+          className="w-full pl-8 pr-7 py-1.5 text-sm text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400 focus:bg-white transition"
           style={{ fontFamily: "'Poppins', sans-serif" }} />
         {search && (
           <button onClick={() => onSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -169,9 +170,9 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
 
       <div className="relative" ref={ref}>
         <button onClick={() => setOpen((v) => !v)}
-          className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-2 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap"
+          className="inline-flex cursor-pointer items-center gap-1.5 px-2 py-1.5 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap"
           style={{
-            fontFamily: "'Poppins', sans-serif  ",
+            fontFamily: "'Poppins', sans-serif",
             background: sortValue ? "#ede9fe" : "white",
             color: sortValue ? "#3730a3" : "#374151",
             border: sortValue ? "1px solid #c4b5fd" : "1px solid #d1d5db",
@@ -205,6 +206,111 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
   );
 }
 
+/* ─── Legal Entity Dropdown ────────────────────────────────────── */
+function LegalEntityDropdown({ value, onChange, legalEntities, companiesByEntity }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const selected = legalEntities.find((le) => le._id === value);
+  const companyCount = value ? (companiesByEntity[value]?.length ?? 0) : null;
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 px-2   py-1.5 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap hover:shadow-md cursor-pointer"
+        style={{
+          fontFamily: "'Poppins', sans-serif",
+          background: value ? "#eef2ff" : "white",
+          color: value ? "#3730a3" : "#374151",
+          border: value ? "1px solid #a5b4fc" : "1px solid #d1d5db",
+          minWidth: 160,
+        }}
+      >
+        <Building2 size={16} className="text-gray-700" />
+        <span className="flex-1 text-left truncate">
+          {selected ? selected.companyName : "Legal Entity"}
+        </span>
+        {value && companyCount != null && (
+          <span className="inline-flex items-center justify-center rounded-full text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 leading-none">
+            {companyCount}
+          </span>
+        )}
+        <ChevronDown size={13} style={{ opacity: 0.5 }} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 mt-1 bg-white rounded-lg border border-gray-200 z-40 overflow-hidden"
+          style={{ minWidth: 240, maxHeight: 320, overflowY: "auto", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}
+        >
+          {/* Clear option */}
+          {value && (
+            <>
+              <button
+                onClick={() => { onChange(null); setOpen(false); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition cursor-pointer border-b border-gray-100"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                <X size={12} /> Clear — show all companies
+              </button>
+            </>
+          )}
+
+          {legalEntities.length === 0 ? (
+            <p className="px-4 py-6 text-xs text-gray-400 text-center" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              No legal entities found
+            </p>
+          ) : (
+            legalEntities.map((le) => {
+              const count = companiesByEntity[le._id]?.length ?? 0;
+              const isSelected = value === le._id;
+              return (
+                <button
+                  key={le._id}
+                  onClick={() => { onChange(le._id); setOpen(false); }}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium transition cursor-pointer"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    background: isSelected ? "#eef2ff" : "white",
+                    color: isSelected ? "#3730a3" : "#374151",
+                  }}
+                  onMouseEnter={(ev) => { if (!isSelected) ev.currentTarget.style.background = "#f5f3ff"; }}
+                  onMouseLeave={(ev) => { if (!isSelected) ev.currentTarget.style.background = "white"; }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                      <Building2 size={12} style={{ color: "#4f46e5" }} />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <p className="font-semibold truncate text-sm leading-tight">{le.companyName}</p>
+                      {le.countryName && (
+                        <p className="text-xs text-gray-400 leading-tight mt-0.5">{le.countryName}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-gray-400 font-medium">
+                      {count} co.
+                    </span>
+                    {isSelected && <Check size={13} className="text-indigo-600" />}
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main page ──────────────────────────────────────────────── */
 const ExpenseInquiries = () => {
   const navigate = useNavigate();
@@ -224,6 +330,32 @@ const ExpenseInquiries = () => {
   const [editData, setEditData] = useState(null);
   const [formDefaultTab, setFormDefaultTab] = useState("manual");
 
+  // ── Legal entity state ──
+  const [legalEntities, setLegalEntities] = useState([]);
+  const [allCompanies, setAllCompanies] = useState([]);
+  const [selectedEntityId, setSelectedEntityId] = useState(null);
+
+  // Map entityId → companies[]
+  const companiesByEntity = useMemo(() => {
+    const map = {};
+    if (!Array.isArray(allCompanies)) return map;
+    allCompanies.forEach((c) => {
+      const eid = c.legalEntityId ? String(c.legalEntityId) : null;
+      if (!eid) return;
+      if (!map[eid]) map[eid] = [];
+      map[eid].push(c);
+    });
+    return map;
+  }, [allCompanies]);
+
+  // Company names belonging to selected entity
+  const entityCompanyNames = useMemo(() => {
+    if (!selectedEntityId) return null;
+    return new Set(
+      (companiesByEntity[selectedEntityId] || []).map((c) => c.companyName)
+    );
+  }, [selectedEntityId, companiesByEntity]);
+
   useEffect(() => {
     if (!document.getElementById("poppins-font")) {
       const link = document.createElement("link");
@@ -232,6 +364,8 @@ const ExpenseInquiries = () => {
       document.head.appendChild(link);
     }
     fetchExpenses();
+    fetchLegalEntities();
+    fetchAllCompanies();
   }, []);
 
   useEffect(() => {
@@ -272,6 +406,42 @@ const ExpenseInquiries = () => {
     }
   };
 
+  const fetchLegalEntities = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/legal-entities");
+      const raw = res.data;
+      // handle: array, { data: [] }, { legalEntities: [] }
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.legalEntities)
+            ? raw.legalEntities
+            : [];
+      setLegalEntities(list);
+    } catch (err) {
+      console.error("Failed to fetch legal entities", err);
+    }
+  };
+
+  const fetchAllCompanies = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/companies");
+      const raw = res.data;
+      // handle: array, { data: [] }, { companies: [] }
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.companies)
+            ? raw.companies
+            : [];
+      setAllCompanies(list);
+    } catch (err) {
+      console.error("Failed to fetch companies", err);
+    }
+  };
+
   const typeColors = useMemo(() => buildTypeColors(expenses), [expenses]);
   const countryColors = useMemo(() => buildCountryColors(expenses), [expenses]);
 
@@ -284,6 +454,11 @@ const ExpenseInquiries = () => {
           .some((v) => toStr(v).includes(q))
       )
       : [...expenses];
+
+    // ── Legal entity filter ──
+    if (entityCompanyNames) {
+      list = list.filter((e) => entityCompanyNames.has(e.company));
+    }
 
     if (filters.transactionId) list = list.filter((e) => toStr(e.transactionId).includes(filters.transactionId.toLowerCase()));
     if (filters.company) list = list.filter((e) => e.company === filters.company);
@@ -315,7 +490,7 @@ const ExpenseInquiries = () => {
     else list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return list;
-  }, [expenses, search, filters, sortValue]);
+  }, [expenses, search, filters, sortValue, entityCompanyNames]);
 
   const totalActive = Object.entries(filters).reduce((n, [k, v]) => {
     if (k === "transactionId" || k === "company") return n + (v ? 1 : 0);
@@ -340,9 +515,15 @@ const ExpenseInquiries = () => {
   const handleSearch = (v) => { setSearch(v); setPage(1); };
   const handleFilterChange = (f) => { setFilters(f); setPage(1); };
   const handleFilterReset = () => { setFilters(DEFAULT_FILTERS); setPage(1); };
-
   const openImport = () => { setEditData(null); setFormDefaultTab("import"); setShowForm(true); };
   const openEdit = (row) => { setEditData(row); setFormDefaultTab("manual"); setShowForm(true); };
+
+  const handleEntityChange = (entityId) => {
+    setSelectedEntityId(entityId);
+    setPage(1);
+    // Also clear the company filter in FilterExpenseInq if one was set
+    if (filters.company) setFilters((f) => ({ ...f, company: "" }));
+  };
 
   if (loading) {
     return (
@@ -362,12 +543,25 @@ const ExpenseInquiries = () => {
       </div>
       <p className="text-base font-semibold text-gray-800" style={{ fontFamily: "'Poppins', sans-serif" }}>No transactions found</p>
       <p className="text-sm text-gray-500" style={{ fontFamily: "'Poppins', sans-serif" }}>
-        {search ? `No results for "${search}".` : "No data available."}
+        {selectedEntityId
+          ? `No expenses for the selected legal entity.`
+          : search
+            ? `No results for "${search}".`
+            : "No data available."}
       </p>
-      {search && (
-        <button onClick={() => handleSearch("")} className="text-sm font-semibold hover:underline" style={{ color: ACCENT }}>
-          Clear search
-        </button>
+      {(search || selectedEntityId) && (
+        <div className="flex items-center gap-2">
+          {search && (
+            <button onClick={() => handleSearch("")} className="text-sm font-semibold hover:underline" style={{ color: ACCENT }}>
+              Clear search
+            </button>
+          )}
+          {selectedEntityId && (
+            <button onClick={() => handleEntityChange(null)} className="text-sm font-semibold hover:underline text-indigo-600">
+              Clear entity filter
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -429,8 +623,8 @@ const ExpenseInquiries = () => {
         style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
         <div className="w-full mx-auto px-5 py-3">
 
+          {/* ROW 1 — title + totals */}
           <div className="flex items-start justify-between mb-3">
-            {/* LEFT SIDE */}
             <div className="flex items-center gap-3 shrink-0">
               <div className="flex items-center justify-center rounded-xl bg-violet-600 shrink-0" style={{ width: 42, height: 42 }}>
                 <Receipt size={21} className="text-white" />
@@ -443,6 +637,11 @@ const ExpenseInquiries = () => {
                   {viewMode === "table"
                     ? `Showing ${showingFrom}–${showingTo} of ${filtered.length} transactions`
                     : `${filtered.length} transactions`}
+                  {selectedEntityId && (
+                    <span className="ml-1.5 text-indigo-500 font-semibold">
+                      · {legalEntities.find((le) => le._id === selectedEntityId)?.companyName}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -473,14 +672,16 @@ const ExpenseInquiries = () => {
             </div>
           </div>
 
-          {/* SECOND ROW */}
-          <div className="flex items-center flex-wrap gap-2">
+          {/* ROW 2 — search / sort / entity / view / actions */}
+          <div className="flex items-center flex-wrap gap-1.5">
             <SortBar
               search={search}
               onSearch={handleSearch}
               sortValue={sortValue}
               onSort={(v) => { setSortValue(v); setPage(1); }}
             />
+
+            {/* view toggle */}
             <div className="flex items-center ml-1.5 mr-1.5 bg-gray-100 rounded-lg p-1 shrink-0">
               <button onClick={() => setViewMode("table")}
                 className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-md transition-all"
@@ -503,14 +704,23 @@ const ExpenseInquiries = () => {
                 <LayoutGrid size={16} />
               </button>
             </div>
+
             <button onClick={() => navigate("/admin/manageexpense")}
-              className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
-              <Receipt size={18} /> Create
+              className="inline-flex items-center gap-1 px-2 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
+              <Receipt size={17} /> Create
             </button>
 
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-2">
+              {/* ACTIONS */}
 
-              {/* ACTIONS BUTTON */}
+              {/* ── LEGAL ENTITY DROPDOWN ── */}
+              <LegalEntityDropdown
+                value={selectedEntityId}
+                onChange={handleEntityChange}
+                legalEntities={legalEntities}
+                companiesByEntity={companiesByEntity}
+              />
+
               <div className="relative z-50" ref={actionsRef}>
                 <button
                   onClick={() => setActionsOpen((v) => !v)}
@@ -521,17 +731,11 @@ const ExpenseInquiries = () => {
                   Actions
                   <ChevronDown size={14} />
                 </button>
-
                 {actionsOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
-                  >
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}>
                     <button
-                      onClick={() => {
-                        openImport();
-                        setActionsOpen(false);
-                      }}
+                      onClick={() => { openImport(); setActionsOpen(false); }}
                       className="w-full flex cursor-pointer items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-800 transition"
                     >
                       <FilePlus size={16} />
@@ -543,7 +747,7 @@ const ExpenseInquiries = () => {
                 )}
               </div>
 
-              {/* FILTER BUTTON */}
+              {/* FILTER */}
               <button
                 onClick={() => setFilterOpen(true)}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer hover:shadow-md"
@@ -551,19 +755,14 @@ const ExpenseInquiries = () => {
                   fontFamily: "'Poppins', sans-serif",
                   background: totalActive > 0 ? "#4F46E5" : "white",
                   color: totalActive > 0 ? "white" : "#374151",
-                  border:
-                    totalActive > 0
-                      ? "1px solid #4F46E5"
-                      : "1px solid #d1d5db",
+                  border: totalActive > 0 ? "1px solid #4F46E5" : "1px solid #d1d5db",
                 }}
               >
                 <SlidersHorizontal size={15} />
                 Filter
                 {totalActive > 0 && (
-                  <span
-                    className="inline-flex items-center justify-center rounded-full text-xs font-bold bg-white text-indigo-600"
-                    style={{ width: 18, height: 18, fontSize: 10 }}
-                  >
+                  <span className="inline-flex items-center justify-center rounded-full text-xs font-bold bg-white text-indigo-600"
+                    style={{ width: 18, height: 18, fontSize: 10 }}>
                     {totalActive}
                   </span>
                 )}
@@ -611,7 +810,7 @@ const ExpenseInquiries = () => {
                 <thead>
                   <tr style={{ background: "#f0f2f5", borderBottom: "2px solid #d1d5db" }}>
                     {["#", "Transaction ID", "Date", "Company", "Type", "Country", "Department", "Counterparty", "Description", "Account", "Amount", "Currency", "FX", "INR Amount", "Ledger"].map((h) => (
-                      <th key={h} className="px-6 py-3.5 text-center  whitespace-nowrap"
+                      <th key={h} className="px-6 py-3.5 text-center whitespace-nowrap"
                         style={{ fontSize: 14, fontWeight: 700, color: "black", letterSpacing: "0.02em" }}>
                         {h}
                       </th>
@@ -680,7 +879,7 @@ const ExpenseInquiries = () => {
                           <td className="px-4 py-4" onClick={(ev) => ev.stopPropagation()}>
                             <button
                               onClick={(ev) => { ev.stopPropagation(); setLedgerExpense(e); }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg  border transition-all whitespace-nowrap cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer"
                               style={{ background: "#f5f3ff", color: "#4F46E5", border: "1px solid #c4b5fd" }}
                               onMouseEnter={(ev) => { ev.currentTarget.style.background = "#4F46E5"; ev.currentTarget.style.color = "white"; }}
                               onMouseLeave={(ev) => { ev.currentTarget.style.background = "#f5f3ff"; ev.currentTarget.style.color = "#4F46E5"; }}

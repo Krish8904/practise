@@ -81,14 +81,6 @@ const MastersPage = () => {
           Reference data that powers your entire admin system
         </p>
 
-        {/* Rule */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
-          <div style={{ width: 28, height: 2, background: "#0f172a", borderRadius: 2 }} />
-          <div style={{ flex: 1, height: 1, background: "#e2e8f0", borderRadius: 2 }} />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#cbd5e1", letterSpacing: "0.1em" }}>
-            {masterSections.reduce((a, s) => a + s.subMasters.length, 0)} MODULES
-          </span>
-        </div>
       </div>
 
       {/* ── Cards ── */}

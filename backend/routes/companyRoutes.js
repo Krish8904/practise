@@ -13,10 +13,10 @@ const toObjectId = (val) => {
 
 const sanitizeBody = (body) => ({
   ...body,
-  category: toObjectId(body.category),
+  category:         toObjectId(body.category),
   natureOfBusiness: (body.natureOfBusiness || []).filter(v => mongoose.Types.ObjectId.isValid(v)),
-  channel: (body.channel || []).filter(v => mongoose.Types.ObjectId.isValid(v)),
-  subcategory: (body.subcategory || []).filter(v => mongoose.Types.ObjectId.isValid(v)),
+  channel:          (body.channel          || []).filter(v => mongoose.Types.ObjectId.isValid(v)),
+  subcategory:      (body.subcategory      || []).filter(v => mongoose.Types.ObjectId.isValid(v)),
 });
 
 const lookupPipeline = [
@@ -66,9 +66,6 @@ const lookupPipeline = [
 
 /* ─────────────────────────────────────────────
    Helper: sync a saved company → LegalEntity
-   Runs after every POST (single + bulk).
-   country / currency ObjectIds come straight from
-   the saved company document if present.
 ───────────────────────────────────────────── */
 async function syncLegalEntity(savedDoc) {
   try {
@@ -77,13 +74,10 @@ async function syncLegalEntity(savedDoc) {
       { companyName: savedDoc.companyName.trim() },
       {
         $set: {
-          // Only set these when the company carries them;
-          // PUT /legal-entities/:id is used to enrich later.
           country:         savedDoc.country         || null,
           localCurrency:   savedDoc.localCurrency   || null,
           foreignCurrency: savedDoc.foreignCurrency || null,
         },
-        // Never overwrite richer data already stored on the entity
         $setOnInsert: {
           countryName:         "",
           localCurrencyCode:   "",
@@ -93,7 +87,6 @@ async function syncLegalEntity(savedDoc) {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
   } catch (err) {
-    // Non-fatal — log but don't fail the company request
     console.warn("LegalEntity sync warning:", err.message);
   }
 }
@@ -114,7 +107,6 @@ router.post("/", async (req, res) => {
     const company = new Company(sanitizeBody(req.body));
     const saved   = await company.save();
 
-    // Auto-create / update matching LegalEntity
     await syncLegalEntity(saved);
 
     const [resolved] = await Company.aggregate([
@@ -142,8 +134,6 @@ router.post("/bulk", async (req, res) => {
         const doc   = new Company(sanitizeBody(company));
         const saved = await doc.save();
         inserted.push(saved._id);
-
-        // Auto-create / update matching LegalEntity
         await syncLegalEntity(saved);
       } catch (err) {
         errors.push(`${company.companyName ?? "Unknown"}: ${err.message}`);
@@ -164,7 +154,7 @@ router.post("/bulk", async (req, res) => {
   }
 });
 
-/* ── PUT ── */
+/* ── PUT full update ── */
 router.put("/:id", async (req, res) => {
   try {
     const updated = await Company.findByIdAndUpdate(
@@ -179,6 +169,46 @@ router.put("/:id", async (req, res) => {
       ...lookupPipeline,
     ]);
     res.json({ success: true, data: resolved });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/* ── PATCH — legal entity assignment only ──
+   Bypasses sanitizeBody intentionally; only touches
+   legal-entity fields so ObjectId arrays are never corrupted. */
+router.patch("/:id", async (req, res) => {
+  try {
+    const {
+      legalEntityId,
+      legalEntityName,
+      country,
+      countryName,
+      localCurrency,
+      localCurrencyCode,
+      foreignCurrency,
+      foreignCurrencyCode,
+    } = req.body;
+
+    const updated = await Company.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          legalEntityId:       toObjectId(legalEntityId),
+          legalEntityName:     legalEntityName     ?? null,
+          country:             toObjectId(country),
+          countryName:         countryName         ?? null,
+          localCurrency:       toObjectId(localCurrency),
+          localCurrencyCode:   localCurrencyCode   ?? null,
+          foreignCurrency:     toObjectId(foreignCurrency),
+          foreignCurrencyCode: foreignCurrencyCode ?? null,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ success: false, message: "Company not found" });
+    res.json({ success: true, data: updated });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

@@ -457,7 +457,7 @@ export default function AdminDashboard() {
 
         // Companies
         crumbs.push({
-          label: 'Companies',
+          label: 'Customers',
           action: () => {
             navigate('/admin');
             setCompaniesExpanded(true);
@@ -482,10 +482,10 @@ export default function AdminDashboard() {
       } else if (activeSection === 'legalentities') {
         crumbs.push({ label: 'Legal Entites', action: null });
       } else if (activeSection === 'newcompany') {
-        crumbs.push({ label: 'Companies', action: () => setCompaniesExpanded(true) });
+        crumbs.push({ label: 'Customers', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Company Inquiries', action: null });
       } else if (activeSection === 'expense-inquiries') {
-        crumbs.push({ label: 'Companies', action: () => setCompaniesExpanded(true) });
+        crumbs.push({ label: 'Customers', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Expense Management', action: null });
       } else if (activeSection === 'masters') {
         crumbs.push({

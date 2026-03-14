@@ -1,27 +1,21 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-
-// ── Fetch next invoice number from backend (persists across all devices) ──
 async function getNextInvoiceNumber(company) {
-  const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/invoice-number/${encodeURIComponent(company)}`, {
-    method: "POST",
-  });
+  const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/invoice-number/${encodeURIComponent(company)}`, { method: "POST" });
   if (!res.ok) throw new Error("Failed to fetch invoice number");
   const { invNum } = await res.json();
   return invNum;
 }
 
 const fmt = (num) =>
-  num == null ? "0.00"
-    : Number(num).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  num == null ? "0.00" : Number(num).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fmtDate = (d) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-// ── Font cache ──
 let cachedFont = null;
 async function loadFont() {
   if (cachedFont) return cachedFont;
@@ -69,95 +63,104 @@ export async function generateLedgerInvoice({
 
   const dateRange = `${applied.from ? fmtDate(applied.from) : "—"} – ${applied.to ? fmtDate(applied.to) : "—"}`;
 
-  // ── Colors ──
-  const INK      = [30,  30,  40];
-  const MID      = [90,  90, 105];
-  const LIGHT    = [160, 160, 175];
-  const BORDER   = [210, 214, 220];
-  const ROW_ALT  = [248, 249, 251];
-  const GREEN    = [22,  163,  74];
-  const RED      = [220,  38,  38];
-  const BLUE     = [79,  70,  229];
-  const HDR_BG   = [28,  30,  40];
-  const HDR_TEXT = [240, 241, 245];
+  // ── Colors — same hues, higher contrast ──
+  const INK      = [15,  15,  22];    // deeper black
+  const MID      = [70,  70,  88];    // darker mid
+  const LIGHT    = [120, 120, 138];   // darker "light" so labels are readable
+  const BORDER   = [195, 200, 210];   // slightly darker border
+  const ROW_ALT  = [244, 246, 250];
+  const GREEN    = [16,  140,  60];   // richer green
+  const RED      = [200,  25,  25];   // deeper red
+  const BLUE     = [67,  56,  220];   // richer indigo
+  const HDR_BG   = [20,  22,  34];    // slightly darker header
+  const HDR_TEXT = [248, 249, 252];   // brighter white text
+  const HDR_SUB  = [195, 197, 218];   // brighter company name
+  const HDR_DIM  = [130, 132, 158];   // brighter dim text
 
   // ════════════════════════════════
-  //  drawHeader
+  //  drawHeader — taller, more spacious
   // ════════════════════════════════
   const drawHeader = (pageNum) => {
-    // Dark header band
     doc.setFillColor(...HDR_BG);
-    doc.rect(0, 0, PW, 32, "F");
+    doc.rect(0, 0, PW, 38, "F");
 
-    // Thin indigo accent line at very top
+    // Thicker indigo accent line
     doc.setFillColor(...BLUE);
-    doc.rect(0, 0, PW, 1.2, "F");
+    doc.rect(0, 0, PW, 2, "F");
 
-    // "Ledger" title — left
-    B(23);
+    // "Ledger" — bigger, bolder
+    B(26);
     doc.setTextColor(...HDR_TEXT);
-    doc.text("Ledger", 14, 20);
+    doc.text("Ledger", 14, 22);
 
-    // Company name — left, below title
-    N(13);
-    doc.setTextColor(180, 182, 200);
+    // Company name
+    N(12);
+    doc.setTextColor(...HDR_SUB);
     const compLine = doc.splitTextToSize(company, 110)[0];
-    doc.text(compLine, 14, 27);
+    doc.text(compLine, 14, 30);
 
-    // "Invoice ID" label
-    N(6.5);
-    doc.setTextColor(140, 142, 160);
+    // Invoice ID — right
+    N(7);
+    doc.setTextColor(...HDR_DIM);
     doc.text("Invoice ID", PW - 14, 17, { align: "right" });
-    B(8.5);
-    doc.setTextColor(200, 202, 220);
-    doc.text(invNum, PW - 14, 22, { align: "right" });
+    B(10);
+    doc.setTextColor(215, 217, 238);
+    doc.text(invNum, PW - 14, 24, { align: "right" });
 
-    // Period — right
-    N(7.5);
+    // Period — right, below invoice ID
+    N(8);
     doc.setTextColor(...HDR_TEXT);
-    doc.text(dateRange, PW - 14, 27, { align: "right" });
+    doc.text(dateRange, PW - 14, 31, { align: "right" });
 
     if (pageNum > 1) {
-      N(6.5);
-      doc.setTextColor(140, 142, 160);
-      doc.text(`Page ${pageNum}`, PW - 14, 29, { align: "right" });
+      N(7);
+      doc.setTextColor(...HDR_DIM);
+      doc.text(`Page ${pageNum}`, PW - 14, 36, { align: "right" });
     }
   };
 
   // ════════════════════════════════
-  //  Summary row (4 small boxes)
+  //  Summary — taller boxes, bigger text
   // ════════════════════════════════
   const drawSummary = () => {
-    const Y = 38;
-    const H = 18;
-    const W = (PW - 28 - 9) / 4; // 3 gaps of 3mm
+    const Y = 44;
+    const H = 22;
+    const GAP = 3;
+    const W = (PW - 28 - GAP * 3) / 4;
+
     const items = [
-      { label: "Opening Balance", value: previousBalance, color: INK },
-      { label: "Total Debits",    value: -invoiceAmount,  color: RED },
-      { label: "Total Credits",   value: paymentAmount,   color: GREEN },
+      { label: "Opening Balance", value: previousBalance, color: INK  },
+      { label: "Total Debits",    value: -invoiceAmount,  color: RED  },
+      { label: "Total Credits",   value: paymentAmount,   color: GREEN},
       { label: "Closing Balance", value: closingBalance,  color: closingBalance < 0 ? RED : GREEN },
     ];
 
     items.forEach((item, i) => {
-      const x = 14 + i * (W + 3);
-      // box outline
+      const x = 14 + i * (W + GAP);
+
+      // White fill + visible border
+      doc.setFillColor(255, 255, 255);
       doc.setDrawColor(...BORDER);
-      doc.setLineWidth(0.3);
-      doc.rect(x, Y, W, H);
+      doc.setLineWidth(0.4);
+      doc.rect(x, Y, W, H, "FD");
 
-      // label
-      N(6.5);
+      // Coloured top bar (3mm thick)
+      doc.setFillColor(...(i === 0 ? [180, 182, 200] : item.color));
+      doc.rect(x, Y, W, 3, "F");
+
+      // Label — darker, more readable
+      N(7);
       doc.setTextColor(...LIGHT);
-      doc.text(item.label, x + 4, Y + 6);
+      doc.text(item.label, x + 4, Y + 10);
 
-      // value — bold and larger
-      B(11);
+      // Value — larger
+      B(12);
       doc.setTextColor(...item.color);
       const sign = item.value < 0 ? "−" : "";
-      doc.text(`${sign}₹${fmt(Math.abs(item.value))}`, x + 4, Y + 14);
+      doc.text(`${sign}₹${fmt(Math.abs(item.value))}`, x + 4, Y + 18);
     });
 
-    return Y + H; // returns bottom of summary
+    return Y + H;
   };
 
   // ════════════════════════════════
@@ -166,28 +169,30 @@ export async function generateLedgerInvoice({
   drawHeader(1);
   const summaryBottom = drawSummary();
 
-  // Thin divider + section label
-  const secY = summaryBottom + 5;
+  const secY = summaryBottom + 6;
+  // Section label above rule
+  N(7);
+  doc.setTextColor(...LIGHT);
+  doc.text("TRANSACTION DETAIL", 14, secY - 1.5);
   doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.3);
+  doc.setLineWidth(0.35);
   doc.line(14, secY, PW - 14, secY);
 
   // ════════════════════════════════
-  //  Table body
+  //  Table rows
   // ════════════════════════════════
   const tableBody = [];
 
-  // Opening balance row
   tableBody.push([
     { content: "", styles: { fontSize: 6 } },
-    { content: applied.from ? fmtDate(applied.from) : "—", styles: { textColor: LIGHT, fontSize: 7 } },
-    { content: "Opening Balance", styles: { textColor: BLUE, fontStyle: "bold", fontSize: 7.5 } },
+    { content: applied.from ? fmtDate(applied.from) : "—", styles: { textColor: LIGHT, fontSize: 7.5 } },
+    { content: "Opening Balance", styles: { textColor: BLUE, fontStyle: "bold", fontSize: 8 } },
     { content: "", styles: {} },
     { content: "", styles: {} },
     { content: "", styles: {} },
     {
       content: `${previousBalance < 0 ? "−" : ""}₹${fmt(Math.abs(previousBalance))}`,
-      styles: { halign: "right", fontStyle: "bold", fontSize: 7.5, textColor: previousBalance < 0 ? RED : INK },
+      styles: { halign: "right", fontStyle: "bold", fontSize: 8, textColor: previousBalance < 0 ? RED : INK },
     },
   ]);
 
@@ -195,32 +200,24 @@ export async function generateLedgerInvoice({
     const isDebit  = row.ledgerAmount < 0;
     const isCredit = row.ledgerAmount > 0;
     tableBody.push([
-      { content: String(idx + 1), styles: { textColor: LIGHT, fontSize: 6.5, halign: "center" } },
-      { content: fmtDate(row.date), styles: { textColor: MID, fontSize: 7 } },
-      { content: row.description || "—", styles: { textColor: INK, fontSize: 7.5 } },
+      { content: String(idx + 1), styles: { textColor: LIGHT, fontSize: 7, halign: "center" } },
+      { content: fmtDate(row.date), styles: { textColor: MID, fontSize: 7.5 } },
+      { content: row.description || "—", styles: { textColor: INK, fontSize: 8 } },
       {
-        content: (row.typeLabel || row.type || "—"),
-        styles: {
-          fontSize: 6.5,
-          textColor: isCredit ? GREEN : isDebit ? RED : LIGHT,
-        },
+        content: row.typeLabel || row.type || "—",
+        styles: { fontSize: 7, fontStyle: "bold", textColor: isCredit ? GREEN : isDebit ? RED : LIGHT },
       },
       {
         content: isDebit ? `₹${fmt(Math.abs(row.ledgerAmount))}` : "",
-        styles: { halign: "right", fontSize: 7.5, textColor: RED, fontStyle: "bold" },
+        styles: { halign: "right", fontSize: 8, textColor: RED, fontStyle: "bold" },
       },
       {
         content: isCredit ? `₹${fmt(row.ledgerAmount)}` : "",
-        styles: { halign: "right", fontSize: 7.5, textColor: GREEN, fontStyle: "bold" },
+        styles: { halign: "right", fontSize: 8, textColor: GREEN, fontStyle: "bold" },
       },
       {
         content: `${row.closingBalance < 0 ? "−" : ""}₹${fmt(Math.abs(row.closingBalance))}`,
-        styles: {
-          halign: "right",
-          fontSize: 7.5,
-          fontStyle: "bold",
-          textColor: row.closingBalance < 0 ? RED : INK,
-        },
+        styles: { halign: "right", fontSize: 8, fontStyle: "bold", textColor: row.closingBalance < 0 ? RED : INK },
       },
     ]);
   });
@@ -228,30 +225,30 @@ export async function generateLedgerInvoice({
   autoTable(doc, {
     startY: secY + 2,
     head: [[
-      { content: "#",           styles: { halign: "center" } },
-      { content: "Date"         },
-      { content: "Description"  },
-      { content: "Type"         },
-      { content: "Debit",       styles: { halign: "right" } },
-      { content: "Credit",      styles: { halign: "right" } },
-      { content: "Balance",     styles: { halign: "right" } },
+      { content: "#",          styles: { halign: "center" } },
+      { content: "Date"        },
+      { content: "Description" },
+      { content: "Type"        },
+      { content: "Debit",      styles: { halign: "right" } },
+      { content: "Credit",     styles: { halign: "right" } },
+      { content: "Balance",    styles: { halign: "right" } },
     ]],
     body: tableBody,
     theme: "plain",
     styles: {
       font: F,
-      fontSize: 7.5,
-      cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+      fontSize: 8,
+      cellPadding: { top: 3.8, bottom: 3.8, left: 3.5, right: 3.5 },
       lineWidth: 0,
       overflow: "ellipsize",
     },
     headStyles: {
       font: F,
       fontStyle: "bold",
-      fontSize: 7,
-      fillColor: [240, 241, 245],
+      fontSize: 7.5,
+      fillColor: [228, 230, 238],   // darker head bg
       textColor: MID,
-      cellPadding: { top: 3.5, bottom: 3.5, left: 3, right: 3 },
+      cellPadding: { top: 4, bottom: 4, left: 3.5, right: 3.5 },
     },
     columnStyles: {
       0: { cellWidth: 8  },
@@ -264,15 +261,13 @@ export async function generateLedgerInvoice({
     },
     didParseCell: (data) => {
       if (data.section === "body") {
-        // alternating row tint
         data.cell.styles.fillColor = data.row.index % 2 === 0 ? [255, 255, 255] : ROW_ALT;
       }
     },
     didDrawCell: (data) => {
-      // bottom border on each row (subtle)
       if (data.section === "body") {
         doc.setDrawColor(...BORDER);
-        doc.setLineWidth(0.15);
+        doc.setLineWidth(0.2);
         doc.line(
           data.cell.x, data.cell.y + data.cell.height,
           data.cell.x + data.cell.width, data.cell.y + data.cell.height
@@ -280,61 +275,60 @@ export async function generateLedgerInvoice({
       }
     },
     didDrawPage: (data) => {
-      // Footer on every page
-      N(6.5);
+      N(7);
       doc.setTextColor(...LIGHT);
-      doc.line(14, PH - 12, PW - 14, PH - 12);
       doc.setDrawColor(...BORDER);
-      doc.setLineWidth(0.2);
-      doc.text(`Generated: ${new Date().toLocaleDateString("en-IN")}`, 14, PH - 8);
-      doc.text(invNum, PW / 2, PH - 8, { align: "center" });
-      doc.text(`Page ${data.pageNumber}`, PW - 14, PH - 8, { align: "right" });
-
+      doc.setLineWidth(0.25);
+      doc.line(14, PH - 12, PW - 14, PH - 12);
+      doc.text(`Generated: ${new Date().toLocaleDateString("en-IN")}`, 14, PH - 7.5);
+      doc.text(invNum, PW / 2, PH - 7.5, { align: "center" });
+      doc.text(`Page ${data.pageNumber}`, PW - 14, PH - 7.5, { align: "right" });
       if (data.pageNumber > 1) drawHeader(data.pageNumber);
     },
-    margin: { top: 46, left: 14, right: 14, bottom: 16 },
+    margin: { top: 50, left: 14, right: 14, bottom: 16 },
   });
 
-  // ── Closing balance summary strip ──
+  // ── Closing balance strip — taller, bolder ──
   const endY = (doc.lastAutoTable.finalY || 200) + 5;
   if (endY < PH - 30) {
-    const BOX_H = 18;
-    doc.setFillColor(245, 246, 248);
-    doc.setDrawColor(...BORDER);
-    doc.setLineWidth(0.3);
-    doc.rect(14, endY, PW - 28, BOX_H);
+    const BOX_H = 22;
 
-    // Left side — meta info
-    N(6.5);
+    doc.setFillColor(238, 240, 246);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.4);
+    doc.rect(14, endY, PW - 28, BOX_H, "FD");
+
+    // Left — transactions
+    N(7);
     doc.setTextColor(...LIGHT);
-    doc.text("TRANSACTIONS", 18, endY + 6);
-    B(9);
+    doc.text("TRANSACTIONS", 18, endY + 8);
+    B(12);
     doc.setTextColor(...INK);
-    doc.text(String(ledgerRows.length), 18, endY + 13);
+    doc.text(String(ledgerRows.length), 18, endY + 17);
 
     // Middle — period
     const midX = PW / 2;
-    N(6.5);
+    N(7);
     doc.setTextColor(...LIGHT);
-    doc.text("PERIOD", midX, endY + 6, { align: "center" });
-    B(8);
+    doc.text("PERIOD", midX, endY + 8, { align: "center" });
+    B(9);
     doc.setTextColor(...MID);
-    doc.text(dateRange, midX, endY + 13, { align: "center" });
+    doc.text(dateRange, midX, endY + 17, { align: "center" });
 
     // Vertical dividers
     doc.setDrawColor(...BORDER);
-    doc.setLineWidth(0.25);
-    doc.line(PW / 2 - 35, endY + 2, PW / 2 - 35, endY + BOX_H - 2);
-    doc.line(PW / 2 + 35, endY + 2, PW / 2 + 35, endY + BOX_H - 2);
+    doc.setLineWidth(0.3);
+    doc.line(PW / 2 - 35, endY + 3, PW / 2 - 35, endY + BOX_H - 3);
+    doc.line(PW / 2 + 35, endY + 3, PW / 2 + 35, endY + BOX_H - 3);
 
-    // Right side — closing balance
-    N(6.5);
+    // Right — closing balance
+    N(7);
     doc.setTextColor(...LIGHT);
-    doc.text("CLOSING BALANCE", PW - 18, endY + 6, { align: "right" });
-    B(11);
+    doc.text("CLOSING BALANCE", PW - 18, endY + 8, { align: "right" });
+    B(13);
     doc.setTextColor(...(closingBalance < 0 ? RED : GREEN));
     const closingSign = closingBalance < 0 ? "−" : "";
-    doc.text(`${closingSign}₹${fmt(Math.abs(closingBalance))}`, PW - 18, endY + 14, { align: "right" });
+    doc.text(`${closingSign}₹${fmt(Math.abs(closingBalance))}`, PW - 18, endY + 17, { align: "right" });
   }
 
   doc.save(`Ledger_${company}_${invNum}.pdf`);

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
+import Lenis from "lenis";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import DynamicPage from "./components/DynamicPage";
@@ -33,7 +34,8 @@ import AllLogs from "./components/AllLogs";
 import CompanyInquiries from "./inquiries/CompanyInquiries";
 import Analytics from "./pages/adminEdit/Analytics";
 import ServicesForm from "./components/ServicesForm";
-{/*----------Masters-------- */ }
+
+/* ---------- Masters ---------- */
 import AdminNatureOfBusiness from "./mastersPages/AdminNatureOfBusiness";
 import Channel from "./mastersPages/Channel";
 import Category from "./mastersPages/Category";
@@ -47,7 +49,6 @@ import MastersPage from "./mastersPages/MasterPage";
 import Settings from "./pages/Settings";
 import LegalEntities from "./pages/LegalEntities";
 
-
 function App() {
   const location = useLocation();
 
@@ -58,12 +59,33 @@ function App() {
     location.pathname.startsWith(route)
   );
 
+  // Smooth scroll only for frontend
+  useEffect(() => {
+    if (hideHeaderFooter) return;
+
+    const lenis = new Lenis({
+      duration: 1.2,
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, [hideHeaderFooter]);
+
   return (
     <>
       {!hideHeaderFooter && <Header />}
+
       <Routes>
         {/* Public Pages */}
-
         <Route path="/" element={<Home />} />
         <Route path="/career" element={<Career />} />
         <Route path="/career/applyforjobs" element={<Apply />} />
@@ -73,17 +95,14 @@ function App() {
         <Route path="/contact" element={<Touch />} />
         <Route path="/call" element={<Call />} />
         <Route path="/companyform" element={<CompanyForm />} />
-
         <Route path="services/servicesform" element={<ServicesForm />} />
-
 
         {/* Admin Login */}
         <Route path="/adminlogin" element={<AdminLogin />} />
 
-        {/* Admin Dashboard with Sidebar Layout */}
+        {/* Admin Dashboard */}
         <Route path="/admin/*" element={<AdminDashboard />}>
 
-          {/* INDEX ROUTE: /admin */}
           <Route index element={<div>Overview</div>} />
 
           {/* Page Edit Routes */}
@@ -117,7 +136,7 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="manageexpense" element={<ExpenseForm />} />
 
-          {/*----------Masters-------- */}
+          {/* Masters */}
           <Route path="mainmasters" element={<MastersPage />} />
           <Route path="mainmasters/natureofbusiness" element={<AdminNatureOfBusiness />} />
           <Route path="mainmasters/channel" element={<Channel />} />
@@ -127,11 +146,11 @@ function App() {
           <Route path="mainmasters/country" element={<Country />} />
           <Route path="mainmasters/currency" element={<ExpenseCurrency />} />
 
-
         </Route>
 
         {/* Dynamic pages */}
         <Route path="/page/:pageName" element={<DynamicPage />} />
+
       </Routes>
 
       {!hideHeaderFooter && <Footer />}

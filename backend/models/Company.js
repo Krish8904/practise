@@ -1,4 +1,3 @@
-// models/Company.js
 import mongoose from "mongoose";
 
 const companySchema = new mongoose.Schema(
@@ -11,7 +10,6 @@ const companySchema = new mongoose.Schema(
     countryCode:   { type: String, default: "+1" },
     companyMobile: { type: String, required: true },
 
-    // ✅ Now storing ObjectIds instead of strings
     natureOfBusiness: [{ type: mongoose.Schema.Types.ObjectId, ref: "NatureOfBusiness" }],
     channel:          [{ type: mongoose.Schema.Types.ObjectId, ref: "Channel" }],
     category:         { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: null },
@@ -24,6 +22,16 @@ const companySchema = new mongoose.Schema(
     personalCountryCode: { type: String, default: "+1" },
     personalMobile:      { type: String, required: true },
     gender:              { type: String },
+
+    // ── Legal Entity assignment ──
+    legalEntityId:       { type: mongoose.Schema.Types.ObjectId, ref: "LegalEntity", default: null },
+    legalEntityName:     { type: String, default: null },
+    country:             { type: mongoose.Schema.Types.ObjectId, default: null },
+    countryName:         { type: String, default: null },
+    localCurrency:       { type: mongoose.Schema.Types.ObjectId, default: null },
+    localCurrencyCode:   { type: String, default: null },
+    foreignCurrency:     { type: mongoose.Schema.Types.ObjectId, default: null },
+    foreignCurrencyCode: { type: String, default: null },
   },
   { timestamps: true }
 );

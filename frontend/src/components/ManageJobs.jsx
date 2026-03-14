@@ -308,7 +308,7 @@ export default function ManageJobs() {
      {/* ── Modal ── */}
       {editing && currentGradient && (
         <div className="fixed inset-0 m-0 bg-slate-700/20 backdrop-blur flex items-center justify-center z-50 p-6 ">
-          <div className="bg-white w-full rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] max-w-[90vw]">
+          <div className="bg-white w-full rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] max-w-[95vw]">
 
             {/* Modal hero header — icon + text side by side */}
             <div className={`bg-linear-to-br ${currentGradient.from} ${currentGradient.to} px-8 py-6 relative flex items-center gap-5`}>
@@ -367,7 +367,7 @@ export default function ManageJobs() {
                   onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })}
                   placeholder="Describe responsibilities, requirements, and what makes this role exciting..."
                   rows={6}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                  className="w-full border h-25 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                 />
               </div>
             </div>
