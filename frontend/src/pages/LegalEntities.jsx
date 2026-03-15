@@ -6,7 +6,7 @@ import {
   MoveRight, Building, UserCheck, UserMinus, SlidersHorizontal,
   TrendingUp, TrendingDown,
 } from "lucide-react";
-import FilterLegalEntity, { DEFAULT_FILTERS } from "./FilterLegalEntity";
+import FilterLegalEntities, { DEFAULT_FILTERS } from "../utils/FilterLegalEntity";
 
 const API           = "http://localhost:5000/api/legal-entities";
 const MASTERS_API   = "http://localhost:5000/api/expense-masters/all";
@@ -378,7 +378,7 @@ export default function LegalEntities() {
         setEntities((prev) => prev.map((e) => e._id === editData._id ? res.data.data : e));
         notify("success", "Legal entity updated!");
       } else {
-        const res = await axios.post(API, buildPayload(form));
+        const res = await axios.post(API, buildPayload(form));  
         setEntities((prev) => [res.data.data, ...prev]);
         notify("success", "Legal entity created!");
       }

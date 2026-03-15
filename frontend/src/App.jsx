@@ -48,6 +48,7 @@ import ExpenseCurrency from "./mastersPages/Currency";
 import MastersPage from "./mastersPages/MasterPage";
 import Settings from "./pages/Settings";
 import LegalEntities from "./pages/LegalEntities";
+import ExpenseAnalytics from "./components/ExpenseAnalytics";
 
 function App() {
   const location = useLocation();
@@ -135,6 +136,7 @@ function App() {
           <Route path="newcompany" element={<CompanyInquiries />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="manageexpense" element={<ExpenseForm />} />
+          <Route path="expenseanalytics" element={<ExpenseAnalytics/>} />
 
           {/* Masters */}
           <Route path="mainmasters" element={<MastersPage />} />

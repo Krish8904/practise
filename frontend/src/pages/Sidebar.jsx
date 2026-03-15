@@ -240,6 +240,14 @@ const Sidebar = ({
         />
         
         <NavItem
+          icon={<BarChart3 size={20} />}
+          label="Expense Analytics"
+          active={activeSection === 'expenseanalytics'}
+          collapsed={sidebarCollapsed}
+          onClick={() => navigate('/admin/expenseanalytics')}
+        />
+
+        <NavItem
           icon={<Briefcase size={20} />}
           label="Career Openings"
           active={activeSection === 'manage-jobs'}

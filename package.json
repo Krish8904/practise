@@ -15,6 +15,7 @@
     "nodemailer": "^8.0.1",
     "react-google-recaptcha": "^3.1.0",
     "react-loading-indicators": "^1.0.1",
+    "recharts": "^2.15.3",
     "whatwg-fetch": "^3.6.20",
     "xlsx": "^0.18.5"
   }

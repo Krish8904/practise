@@ -151,6 +151,8 @@ export default function AdminDashboard() {
       setActiveSection('settings');
     } else if (path.startsWith('/admin/legalentities')) {
       setActiveSection('legalentities');
+    } else if (path.startsWith('/admin/expenseanalytics')) {
+      setActiveSection('expenseanalytics');
     }
   }, [location.pathname]);
 
@@ -481,6 +483,8 @@ export default function AdminDashboard() {
         crumbs.push({ label: 'All Logs', action: null });
       } else if (activeSection === 'legalentities') {
         crumbs.push({ label: 'Legal Entites', action: null });
+      } else if (activeSection === 'expenseanalytics') {
+        crumbs.push({ label: 'Expense Entites', action: null });
       } else if (activeSection === 'newcompany') {
         crumbs.push({ label: 'Customers', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Company Inquiries', action: null });
