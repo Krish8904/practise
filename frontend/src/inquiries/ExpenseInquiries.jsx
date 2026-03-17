@@ -5,7 +5,7 @@ import {
   Receipt, X, ChevronLeft, ChevronRight, LayoutGrid, Table,
   FilePlus, Search, ArrowUpDown, ChevronDown, Check,
   TrendingUp, TrendingDown, Minus, BookOpen, FolderCog, SlidersHorizontal,
-  Building2,
+  Building2, BarChart2,
 } from "lucide-react";
 import FilterExpenseInq, { DEFAULT_FILTERS } from "../utils/FilterExpenseInq";
 import ExpenseForm from "../pages/adminEdit/ExpenseForm";
@@ -154,7 +154,7 @@ function SortBar({ search, onSearch, sortValue, onSort }) {
   const active = SORT_OPTIONS.find((o) => o.value === sortValue);
 
   return (
-    <div className="flex items-center gap-3 shrink-0">
+    <div className="flex items-center gap-1.5 shrink-0">
       <div className="relative" style={{ width: 220 }}>
         <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         <input type="text" placeholder="Search . . ." value={search}
@@ -224,7 +224,7 @@ function LegalEntityDropdown({ value, onChange, legalEntities, companiesByEntity
     <div className="relative shrink-0" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 px-2   py-1.5 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap hover:shadow-md cursor-pointer"
+        className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-semibold border rounded-lg transition-all whitespace-nowrap hover:shadow-md cursor-pointer"
         style={{
           fontFamily: "'Poppins', sans-serif",
           background: value ? "#eef2ff" : "white",
@@ -250,19 +250,15 @@ function LegalEntityDropdown({ value, onChange, legalEntities, companiesByEntity
           className="absolute left-0 mt-1 bg-white rounded-lg border border-gray-200 z-40 overflow-hidden"
           style={{ minWidth: 240, maxHeight: 320, overflowY: "auto", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}
         >
-          {/* Clear option */}
           {value && (
-            <>
-              <button
-                onClick={() => { onChange(null); setOpen(false); }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition cursor-pointer border-b border-gray-100"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                <X size={12} /> Clear — show all companies
-              </button>
-            </>
+            <button
+              onClick={() => { onChange(null); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition cursor-pointer border-b border-gray-100"
+              style={{ fontFamily: "'Poppins', sans-serif" }}
+            >
+              <X size={12} /> Clear — show all companies
+            </button>
           )}
-
           {legalEntities.length === 0 ? (
             <p className="px-4 py-6 text-xs text-gray-400 text-center" style={{ fontFamily: "'Poppins', sans-serif" }}>
               No legal entities found
@@ -296,9 +292,7 @@ function LegalEntityDropdown({ value, onChange, legalEntities, companiesByEntity
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-gray-400 font-medium">
-                      {count} co.
-                    </span>
+                    <span className="text-xs text-gray-400 font-medium">{count} co.</span>
                     {isSelected && <Check size={13} className="text-indigo-600" />}
                   </div>
                 </button>
@@ -335,7 +329,6 @@ const ExpenseInquiries = () => {
   const [allCompanies, setAllCompanies] = useState([]);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
 
-  // Map entityId → companies[]
   const companiesByEntity = useMemo(() => {
     const map = {};
     if (!Array.isArray(allCompanies)) return map;
@@ -348,7 +341,6 @@ const ExpenseInquiries = () => {
     return map;
   }, [allCompanies]);
 
-  // Company names belonging to selected entity
   const entityCompanyNames = useMemo(() => {
     if (!selectedEntityId) return null;
     return new Set(
@@ -410,14 +402,7 @@ const ExpenseInquiries = () => {
     try {
       const res = await axios.get("http://localhost:5000/api/legal-entities");
       const raw = res.data;
-      // handle: array, { data: [] }, { legalEntities: [] }
-      const list = Array.isArray(raw)
-        ? raw
-        : Array.isArray(raw?.data)
-          ? raw.data
-          : Array.isArray(raw?.legalEntities)
-            ? raw.legalEntities
-            : [];
+      const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.legalEntities) ? raw.legalEntities : [];
       setLegalEntities(list);
     } catch (err) {
       console.error("Failed to fetch legal entities", err);
@@ -428,14 +413,7 @@ const ExpenseInquiries = () => {
     try {
       const res = await axios.get("http://localhost:5000/api/companies");
       const raw = res.data;
-      // handle: array, { data: [] }, { companies: [] }
-      const list = Array.isArray(raw)
-        ? raw
-        : Array.isArray(raw?.data)
-          ? raw.data
-          : Array.isArray(raw?.companies)
-            ? raw.companies
-            : [];
+      const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.companies) ? raw.companies : [];
       setAllCompanies(list);
     } catch (err) {
       console.error("Failed to fetch companies", err);
@@ -455,7 +433,6 @@ const ExpenseInquiries = () => {
       )
       : [...expenses];
 
-    // ── Legal entity filter ──
     if (entityCompanyNames) {
       list = list.filter((e) => entityCompanyNames.has(e.company));
     }
@@ -521,7 +498,6 @@ const ExpenseInquiries = () => {
   const handleEntityChange = (entityId) => {
     setSelectedEntityId(entityId);
     setPage(1);
-    // Also clear the company filter in FilterExpenseInq if one was set
     if (filters.company) setFilters((f) => ({ ...f, company: "" }));
   };
 
@@ -648,6 +624,7 @@ const ExpenseInquiries = () => {
 
             <div className="flex flex-row items-end gap-2">
               <div className="flex items-center gap-0.5">
+
                 <div className="flex flex-col items-end px-2.5 py-0.5 border-r border-gray-200">
                   <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Spend</span>
                   <div className="flex items-center gap-0.5">
@@ -672,8 +649,8 @@ const ExpenseInquiries = () => {
             </div>
           </div>
 
-          {/* ROW 2 — search / sort / entity / view / actions */}
-          <div className="flex items-center flex-wrap gap-1.5">
+          {/* ROW 2 — search / sort / view / actions */}
+          <div className="flex items-center flex-wrap gap-1">
             <SortBar
               search={search}
               onSearch={handleSearch}
@@ -705,14 +682,13 @@ const ExpenseInquiries = () => {
               </button>
             </div>
 
-            <button onClick={() => navigate("/admin/manageexpense")}
+            <button onClick={() => navigate("/admin/expense-inquiries/manageexpense")}
               className="inline-flex items-center gap-1 px-2 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg border border-blue-600 hover:bg-white hover:text-blue-600 transition-all shrink-0 whitespace-nowrap cursor-pointer">
               <Receipt size={17} /> Create
             </button>
 
-            <div className="ml-auto flex items-center gap-2">
-              {/* ACTIONS */}
 
+            <div className="ml-auto flex items-center gap-2">
               {/* ── LEGAL ENTITY DROPDOWN ── */}
               <LegalEntityDropdown
                 value={selectedEntityId}

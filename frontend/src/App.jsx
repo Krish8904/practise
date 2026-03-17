@@ -67,6 +67,7 @@ function App() {
     const lenis = new Lenis({
       duration: 1.2,
       smoothWheel: true,
+      
     });
 
     function raf(time) {
@@ -135,8 +136,8 @@ function App() {
           <Route path="all-logs" element={<AllLogs />} />
           <Route path="newcompany" element={<CompanyInquiries />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="manageexpense" element={<ExpenseForm />} />
-          <Route path="expenseanalytics" element={<ExpenseAnalytics/>} />
+          <Route path="expense-inquiries/manageexpense" element={<ExpenseForm />} />
+          <Route path="legalentities/expenseanalytics" element={<ExpenseAnalytics />} />
 
           {/* Masters */}
           <Route path="mainmasters" element={<MastersPage />} />

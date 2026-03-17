@@ -4,10 +4,11 @@
 
 
 @theme {
-  --font-poppins:'Poppins', 'sans-serif'
+  --font-poppins: 'Poppins', 'sans-serif'
 }
 
-html, body {
+html,
+body {
   font-family: 'Poppins', sans-serif;
 }
 
@@ -22,10 +23,28 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* slate-300 */
+  background: #cbd5e1;
+  /* slate-300 */
   border-radius: 20px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; /* slate-400 */
+  background: #94a3b8;
+  /* slate-400 */
+}
+
+#bp-web-widget-container {
+  pointer-events: all !important;
+}
+
+#bp-web-widget-container * {
+  pointer-events: all !important;
+  touch-action: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+#bp-web-widget-container iframe {
+  pointer-events: all !important;
+  touch-action: auto !important;
+  overflow: auto !important;
 }

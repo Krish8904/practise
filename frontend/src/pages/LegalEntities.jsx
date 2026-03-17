@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   Plus, Building2, Globe, X, Pencil, Trash2, Search,
   CheckCircle, AlertCircle, Loader, ChevronRight, Users,
   MoveRight, Building, UserCheck, UserMinus, SlidersHorizontal,
-  TrendingUp, TrendingDown,
+  TrendingUp, TrendingDown, BarChart2,
 } from "lucide-react";
 import FilterLegalEntities, { DEFAULT_FILTERS } from "../utils/FilterLegalEntity";
 
-const API           = "http://localhost:5000/api/legal-entities";
-const MASTERS_API   = "http://localhost:5000/api/expense-masters/all";
+const API = "http://localhost:5000/api/legal-entities";
+const MASTERS_API = "http://localhost:5000/api/expense-masters/all";
 const COMPANIES_API = "http://localhost:5000/api/companies";
-const EXPENSES_API  = "http://localhost:5000/api/expenses";
+const EXPENSES_API = "http://localhost:5000/api/expenses";
 
 const fmt = (num) =>
   num == null ? "—" : Number(num).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -25,10 +26,10 @@ const EMPTY_FORM = { companyName: "", country: "", localCurrency: "", foreignCur
 const entityHue = (name) => (name?.charCodeAt(0) ?? 0) * 47 % 360;
 
 const CURRENCY_SYMBOLS = {
-  USD:"$",EUR:"€",GBP:"£",JPY:"¥",CNY:"¥",INR:"₹",AUD:"A$",CAD:"C$",CHF:"Fr",
-  SGD:"S$",HKD:"HK$",AED:"د.إ",SAR:"﷼",MYR:"RM",THB:"฿",KRW:"₩",BRL:"R$",
-  MXN:"Mex$",ZAR:"R",NOK:"kr",SEK:"kr",DKK:"kr",NZD:"NZ$",RUB:"₽",TRY:"₺",
-  PLN:"zł",IDR:"Rp",PHP:"₱",VND:"₫",EGP:"£",USDT:"₮",
+  USD: "$", EUR: "€", GBP: "£", JPY: "¥", CNY: "¥", INR: "₹", AUD: "A$", CAD: "C$", CHF: "Fr",
+  SGD: "S$", HKD: "HK$", AED: "د.إ", SAR: "﷼", MYR: "RM", THB: "฿", KRW: "₩", BRL: "R$",
+  MXN: "Mex$", ZAR: "R", NOK: "kr", SEK: "kr", DKK: "kr", NZD: "NZ$", RUB: "₽", TRY: "₺",
+  PLN: "zł", IDR: "Rp", PHP: "₱", VND: "₫", EGP: "£", USDT: "₮",
 };
 
 const getCurrencySymbol = (code) => {
@@ -186,8 +187,8 @@ function CompanyAssignmentPanel({ entity, allCompanies, onClose, onAssigned, all
   const [savingId, setSavingId] = useState(null);
   const [search, setSearch] = useState("");
 
-  const assignedIds   = new Set(assigned.map((c) => c._id));
-  const available     = allCompanies
+  const assignedIds = new Set(assigned.map((c) => c._id));
+  const available = allCompanies
     .filter((c) => {
       if (!c.legalEntityId) return true;
       if (String(c.legalEntityId) === String(entity._id)) return false;
@@ -195,9 +196,9 @@ function CompanyAssignmentPanel({ entity, allCompanies, onClose, onAssigned, all
     })
     .filter((c) => !assignedIds.has(c._id));
 
-  const lowerSearch       = search.toLowerCase().trim();
+  const lowerSearch = search.toLowerCase().trim();
   const filteredAvailable = available.filter((c) => c.companyName?.toLowerCase().includes(lowerSearch));
-  const filteredAssigned  = assigned.filter((c) => c.companyName?.toLowerCase().includes(lowerSearch));
+  const filteredAssigned = assigned.filter((c) => c.companyName?.toLowerCase().includes(lowerSearch));
   const h = entityHue(entity.companyName);
 
   const handleAssign = async (company) => {
@@ -315,23 +316,24 @@ function CompanyAssignmentPanel({ entity, allCompanies, onClose, onAssigned, all
    MAIN PAGE
 ══════════════════════════════════════════════ */
 export default function LegalEntities() {
-  const [entities,     setEntities]     = useState([]);
-  const [masters,      setMasters]      = useState({ country: [], currency: [] });
+  const navigate = useNavigate();
+  const [entities, setEntities] = useState([]);
+  const [masters, setMasters] = useState({ country: [], currency: [] });
   const [allCompanies, setAllCompanies] = useState([]);
-  const [allExpenses,  setAllExpenses]  = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [search,       setSearch]       = useState("");
+  const [allExpenses, setAllExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  const [showForm,  setShowForm]  = useState(false);
-  const [editData,  setEditData]  = useState(null);
-  const [saving,    setSaving]    = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const [assignEntity, setAssignEntity] = useState(null);
-  const [deletingId,   setDeletingId]   = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [notification, setNotification] = useState(null);
 
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filters,    setFilters]    = useState(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const notify = (type, message) => {
     setNotification({ type, message });
@@ -345,19 +347,19 @@ export default function LegalEntities() {
       axios.get(COMPANIES_API).catch(() => ({ data: { data: [], success: false } })),
       axios.get(EXPENSES_API).catch(() => ({ data: { data: [], success: false } })),
     ]).then(([entRes, masterRes, compRes, expRes]) => {
-      if (entRes.data.success)  setEntities(entRes.data.data);
+      if (entRes.data.success) setEntities(entRes.data.data);
       const { countries, currencies } = masterRes.data.data || {};
       setMasters({ country: countries || [], currency: currencies || [] });
       if (compRes.data.success) setAllCompanies(compRes.data.data);
-      if (expRes.data.success)  setAllExpenses(expRes.data.data);
+      if (expRes.data.success) setAllExpenses(expRes.data.data);
     }).catch(() => notify("error", "Failed to load data"));
 
   useEffect(() => { loadAll().finally(() => setLoading(false)); }, []);
 
   const buildPayload = (form) => {
-    const countryObj  = masters.country.find((c) => String(c._id) === form.country);
+    const countryObj = masters.country.find((c) => String(c._id) === form.country);
     const localCurObj = masters.currency.find((c) => String(c._id) === form.localCurrency);
-    const forCurObj   = masters.currency.find((c) => String(c._id) === form.foreignCurrency);
+    const forCurObj = masters.currency.find((c) => String(c._id) === form.foreignCurrency);
     return {
       companyName: form.companyName.trim(),
       country: form.country || null,
@@ -378,7 +380,7 @@ export default function LegalEntities() {
         setEntities((prev) => prev.map((e) => e._id === editData._id ? res.data.data : e));
         notify("success", "Legal entity updated!");
       } else {
-        const res = await axios.post(API, buildPayload(form));  
+        const res = await axios.post(API, buildPayload(form));
         setEntities((prev) => [res.data.data, ...prev]);
         notify("success", "Legal entity created!");
       }
@@ -400,31 +402,61 @@ export default function LegalEntities() {
     } finally { setDeletingId(null); }
   };
 
-  const openEdit   = (entity) => { setEditData(entity); setShowForm(true); };
-  const openCreate = ()        => { setEditData(null);   setShowForm(true); };
+  const openEdit = (entity) => { setEditData(entity); setShowForm(true); };
+  const openCreate = () => { setEditData(null); setShowForm(true); };
 
   const getCompanyCount = (entityId) =>
     allCompanies.filter((c) => c.legalEntityId === entityId).length;
 
-  /* ── Active filter count ── */
+  // Calculate financial metrics for each entity
+  const getEntityFinancials = (entityId) => {
+    // Get all companies under this legal entity
+    const entityCompanies = allCompanies
+      .filter(c => String(c.legalEntityId) === String(entityId))
+      .map(c => c.companyName);
+
+    if (entityCompanies.length === 0) {
+      return { spend: 0, credit: 0, net: 0 };
+    }
+
+    // Calculate totals from expenses
+    let spend = 0;
+    let credit = 0;
+
+    allExpenses.forEach(expense => {
+      if (entityCompanies.includes(expense.company)) {
+        const amount = expense.inrAmount ?? 0;
+        if (amount < 0) {
+          spend += Math.abs(amount);
+        } else if (amount > 0) {
+          credit += amount;
+        }
+      }
+    });
+
+    return {
+      spend,
+      credit,
+      net: credit - spend
+    };
+  };
+
   const totalActive = [
     filters.selectedEntity, filters.country,
     filters.localCurrency, filters.foreignCurrency,
   ].filter(Boolean).length;
 
-  /* ── Filtered table rows ── */
   const filtered = useMemo(() => {
     let list = entities.filter((e) =>
       e.companyName?.toLowerCase().includes(search.toLowerCase().trim())
     );
-    if (filters.selectedEntity)  list = list.filter((e) => String(e._id) === filters.selectedEntity);
-    if (filters.country)         list = list.filter((e) => e.countryName === filters.country);
-    if (filters.localCurrency)   list = list.filter((e) => e.localCurrencyCode === filters.localCurrency);
+    if (filters.selectedEntity) list = list.filter((e) => String(e._id) === filters.selectedEntity);
+    if (filters.country) list = list.filter((e) => e.countryName === filters.country);
+    if (filters.localCurrency) list = list.filter((e) => e.localCurrencyCode === filters.localCurrency);
     if (filters.foreignCurrency) list = list.filter((e) => e.foreignCurrencyCode === filters.foreignCurrency);
     return list;
   }, [entities, search, filters]);
 
-  /* ── Header stats: scoped to selected entity or all assigned companies ── */
   const stats = useMemo(() => {
     const relevantNames = new Set(
       allCompanies
@@ -438,7 +470,7 @@ export default function LegalEntities() {
       if (!relevantNames.has(e.company)) return;
       const amt = e.inrAmount ?? 0;
       if (amt < 0) totalExpense += Math.abs(amt);
-      if (amt > 0) totalCredit  += amt;
+      if (amt > 0) totalCredit += amt;
     });
     return { totalExpense, totalCredit, net: totalCredit - totalExpense };
   }, [allExpenses, allCompanies, filters.selectedEntity]);
@@ -513,7 +545,7 @@ export default function LegalEntities() {
             </div>
           </div>
 
-          {/* ROW 2 — search / filter / create */}
+          {/* ROW 2 — search / filter / analytics / create */}
           <div className="flex items-center gap-2">
             <div className="relative" style={{ width: 220 }}>
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -546,8 +578,20 @@ export default function LegalEntities() {
               )}
             </button>
 
+            {/* ── ANALYTICS BUTTON ── */}
+            <button
+              onClick={() => navigate("/admin/legalentities/expenseanalytics")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer"
+              style={{ background: "white", color: "#6d4fc2", border: "1px solid #6d4fc2" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#6d4fc2"; e.currentTarget.style.color = "white"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = "#6d4fc2"; }}
+            >
+              <BarChart2 size={15} />
+              Analytics
+            </button>
+
             <button onClick={openCreate}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition shadow-sm cursor-pointer">
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer bg-white-600 text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white hover:border hover:border-blue-600 ">
               <Plus size={15} /> Create
             </button>
           </div>
@@ -555,7 +599,7 @@ export default function LegalEntities() {
       </div>
 
       {/* ── Table ── */}
-      <div className="p-6">
+      <div className="p-4">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -582,7 +626,7 @@ export default function LegalEntities() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  {["Company", "Country", "Local Currency", "Foreign Currency", "Companies", ""].map((col) => (
+                  {["Company", "Country", "Local Currency", "Foreign Currency", "Net", "Spend", "Credit", "Companies", ""].map((col) => (
                     <th key={col} className="px-4 py-3 text-left text-xs font-bold text-slate-500 tracking-wider uppercase">{col}</th>
                   ))}
                 </tr>
@@ -590,6 +634,7 @@ export default function LegalEntities() {
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((entity) => {
                   const count = getCompanyCount(entity._id);
+                  const financials = getEntityFinancials(entity._id);
                   const h = entityHue(entity.companyName);
                   return (
                     <tr key={entity._id} className="hover:bg-slate-50 transition-colors group">
@@ -623,6 +668,29 @@ export default function LegalEntities() {
                           </span>
                           : <span className="text-slate-300 text-xs">—</span>}
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-red-600">₹{fmt(financials.spend)}</span>
+                          
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-green-600">₹{fmt(financials.credit)}</span>
+                        
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className={`font-bold ${financials.net >= 0 ? "text-green-600" : "text-red-600"}`}>
+                            {financials.net >= 0 ? "+" : "-"}₹{fmt(Math.abs(financials.net))}
+                          </span>
+                          <span className={`text-[10px] mt-0.5 ${financials.net >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            {financials.net >= 0 ? "Surplus" : "Deficit"}
+                          </span>
+                        </div>
+                      </td>
+
                       <td className="px-4 py-3">
                         <button onClick={() => setAssignEntity(entity)} className="flex items-center gap-2 cursor-pointer group/btn">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition ${count > 0
@@ -668,7 +736,6 @@ export default function LegalEntities() {
           onClose={() => setAssignEntity(null)} onAssigned={loadAll} />
       )}
 
-      {/* Filter drawer — fully extracted component */}
       <FilterLegalEntities
         open={filterOpen}
         onClose={() => setFilterOpen(false)}

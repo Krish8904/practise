@@ -71,7 +71,8 @@ app.use("/api/expense-masters", ExpenseMasterRoutes);
 
 app.use("/api", invoiceCounter);
 
-app.use("/api/legal-entities", legalentityRoutes);  // ← add this
+
+app.use("/api/legal-entities", legalentityRoutes);  
 
 
 // MongoDB connection

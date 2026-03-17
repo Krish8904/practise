@@ -23,6 +23,36 @@ import {
   Bell, Save, Edit, Plus, Edit2, Trash2, X, MapPin, Clock, DollarSign,
   MoreVertical, Menu, LogOut, User,
 } from 'lucide-react';
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
+
+const BLUE = "#3b82f6";
+const PURPLE = "#8b5cf6";
+const GREEN = "#10b981";
+const ORANGE = "#f97316";
+const YELLOW = "#eab308";
+const PINK = "#ec4899";
+
+const ChartTT = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: "white", border: "1px solid #e2e8f0", borderRadius: 10,
+      padding: "10px 14px", boxShadow: "0 4px 20px rgba(0,0,0,0.10)", fontSize: 12,
+    }}>
+      {label && <p style={{ color: "#94a3b8", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: 10 }}>{label}</p>}
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: p.fill || p.stroke, display: "inline-block" }} />
+          <span style={{ color: "#475569" }}>{p.name}: </span>
+          <span style={{ fontWeight: 700, color: "#0f172a" }}>{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -37,7 +67,6 @@ export default function AdminDashboard() {
   const [mastersExpanded, setMastersExpanded] = useState(false);
   const [companiesExpanded, setCompaniesExpanded] = useState(false);
 
-  // Sync URL with active section
   useEffect(() => {
     const path = location.pathname;
 
@@ -133,13 +162,13 @@ export default function AdminDashboard() {
       setActiveSection('masters');
       setActivePage('');
       setMastersExpanded(true);
-    } else if (path.startsWith('/admin/manageexpense')) {
-      setActiveSection('manageexpense');
-      setActivePage('');
-      setActiveInquiry('');
     } else if (path.startsWith('/admin/newcompany')) {
       setActiveSection('newcompany');
       setCompaniesExpanded(true);
+      setActivePage('');
+      setActiveInquiry('');
+    } else if (path.startsWith('/admin/expense-inquiries/manageexpense')) {
+      setActiveSection('manageexpense');
       setActivePage('');
       setActiveInquiry('');
     } else if (path.startsWith('/admin/expense-inquiries')) {
@@ -149,48 +178,38 @@ export default function AdminDashboard() {
       setActiveInquiry('');
     } else if (path.startsWith('/admin/settings')) {
       setActiveSection('settings');
+    } else if (path.startsWith('/admin/legalentities/expenseanalytics')) {
+      setActiveSection('expenseanalytics');
+      setActivePage('');
+      setActiveInquiry('');
     } else if (path.startsWith('/admin/legalentities')) {
       setActiveSection('legalentities');
-    } else if (path.startsWith('/admin/expenseanalytics')) {
-      setActiveSection('expenseanalytics');
     }
   }, [location.pathname]);
-
   const [logs, setLogs] = useState([]);
   const [bookingCount, setBookingCount] = useState(0);
   const [pageView, setPageView] = useState('list');
   const [editMode, setEditMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [pageData, setPageData] = useState({
-    title: '',
-    metaDescription: '',
-    status: 'published',
-  });
-
+  const [pageData, setPageData] = useState({ title: '', metaDescription: '', status: 'published' });
   const [allPages, setAllPages] = useState([]);
   const [showPageMenu, setShowPageMenu] = useState(null);
-
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    openRoles: 0,
-    services: 0,
-    useCases: 0,
-    totalVisitors: 0,
-    activeLeads: 0,
+    openRoles: 0, services: 0, useCases: 0,
+    totalVisitors: 0, activeLeads: 0,
   });
-
   const [jobs, setJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [jobFormData, setJobFormData] = useState({
-    title: '',
-    category: 'AI & Data Science',
-    location: '',
-    type: 'Full-Time',
-    description: '',
-    status: 'active',
+    title: '', category: 'AI & Data Science', location: '',
+    type: 'Full-Time', description: '', status: 'active',
   });
+
+  // chart data built from stats + logs
+  const [trendData, setTrendData] = useState([]);
 
   useEffect(() => {
     fetchStats();
@@ -199,90 +218,70 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (activeSection === 'careers') {
-      fetchJobs();
-    }
+    if (activeSection === 'careers') fetchJobs();
   }, [activeSection]);
 
   const fetchAllPages = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/pages');
       setAllPages(response.data);
-    } catch (error) {
-      console.error('Error fetching pages:', error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [pagesRes, companiesRes, jobAppsRes] = await Promise.all([
+      const [pagesRes, companiesRes, jobAppsRes, bookingsRes] = await Promise.all([
         fetch('http://localhost:5000/api/pages'),
         axios.get('http://localhost:5000/api/companies'),
         axios.get('http://localhost:5000/api/career/applications'),
+        axios.get('http://localhost:5000/api/bookings'),
       ]);
 
       const pages = await pagesRes.json();
       const companiesCount = companiesRes.data.success ? companiesRes.data.data.length : 0;
       const jobAppsCount = jobAppsRes.data.length || 0;
+      const bookings = bookingsRes.data || [];
 
-      let servicesCount = 0;
-      let useCasesCount = 0;
-      let openRolesCount = 0;
-
+      let servicesCount = 0, useCasesCount = 0, openRolesCount = 0;
       pages.forEach((page) => {
-        if (page.pageName === 'services' && Array.isArray(page.sections?.services?.items)) {
+        if (page.pageName === 'services' && Array.isArray(page.sections?.services?.items))
           servicesCount = page.sections.services.items.length;
-        }
-        if (page.pageName === 'usecases' && Array.isArray(page.sections?.usecases?.items)) {
+        if (page.pageName === 'usecases' && Array.isArray(page.sections?.usecases?.items))
           useCasesCount = page.sections.usecases.items.length;
-        }
         if (page.pageName === 'career') {
-          const jobCategories = page.sections?.jobCategoriesSection?.jobCategories || [];
-          openRolesCount = jobCategories.reduce((acc, cat) => acc + (cat.jobs?.length || 0), 0);
+          const cats = page.sections?.jobCategoriesSection?.jobCategories || [];
+          openRolesCount = cats.reduce((a, c) => a + (c.jobs?.length || 0), 0);
         }
       });
 
+      setBookingCount(bookings.length);
       setStats({
-        services: servicesCount,
-        useCases: useCasesCount,
-        openRoles: openRolesCount,
-        totalVisitors: 0,
-        activeLeads: 0,
-        companiesCount,
-        jobAppsCount,
+        services: servicesCount, useCases: useCasesCount, openRoles: openRolesCount,
+        totalVisitors: 0, activeLeads: 0, companiesCount, jobAppsCount,
       });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchBookingsCount = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/bookings");
-      setBookingCount(res.data.length);
-    } catch (err) {
-      console.error("Error fetching bookings:", err);
-    }
-  };
+      /* build 6-month trend from bookings + applications */
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const now = new Date();
+      const last6 = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+        return { label: monthNames[d.getMonth()], key: `${d.getFullYear()}-${d.getMonth()}`, bookings: 0, applications: 0 };
+      });
+      const toKey = (d) => { const dt = new Date(d); return `${dt.getFullYear()}-${dt.getMonth()}`; };
+      bookings.forEach(b => { const m = last6.find(x => x.key === toKey(b.createdAt)); if (m) m.bookings++; });
+      jobAppsRes.data.forEach(a => { const m = last6.find(x => x.key === toKey(a.createdAt)); if (m) m.applications++; });
+      setTrendData(last6);
 
-  useEffect(() => {
-    fetchBookingsCount();
-  }, []);
-
-  const addLogToUI = (newLog) => {
-    setLogs((prev) => [newLog, ...prev.slice(0, 5)]);
+    } catch (error) { console.error(error); }
+    finally { setLoading(false); }
   };
 
   const fetchLogs = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/logs");
       setLogs(res.data.slice(0, 6));
-    } catch (err) {
-      console.error("Error fetching logs:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const fetchJobs = async () => {
@@ -290,150 +289,27 @@ export default function AdminDashboard() {
       setJobsLoading(true);
       const response = await fetch('http://localhost:5000/api/pages/career');
       const data = await response.json();
-
       const allJobs = [];
-      if (data.sections && data.sections.jobCategories) {
+      if (data.sections?.jobCategories) {
         data.sections.jobCategories.forEach((category, catIndex) => {
           category.jobs.forEach((job, jobIndex) => {
-            allJobs.push({
-              id: `${catIndex}-${jobIndex}`,
-              categoryIndex: catIndex,
-              jobIndex: jobIndex,
-              title: job.title,
-              category: category.category,
-              location: job.location,
-              type: job.type,
-              description: job.description,
-              status: 'active',
-            });
+            allJobs.push({ id: `${catIndex}-${jobIndex}`, categoryIndex: catIndex, jobIndex, ...job, category: category.category, status: 'active' });
           });
         });
       }
       setJobs(allJobs);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-      setJobs([
-        {
-          id: '0-0',
-          categoryIndex: 0,
-          jobIndex: 0,
-          title: 'AI Consultant',
-          category: 'AI & Data Science',
-          location: 'Remote / EU',
-          type: 'Full-Time',
-          description: 'Guide clients in implementing AI solutions, from strategy to deployment, ensuring measurable business impact.',
-          status: 'active',
-        },
-      ]);
-    } finally {
-      setJobsLoading(false);
-    }
+    } catch (error) { console.error(error); }
+    finally { setJobsLoading(false); }
   };
 
-  const resetJobForm = () => {
-    setJobFormData({
-      title: '',
-      category: 'AI & Data Science',
-      location: '',
-      type: 'Full-Time',
-      description: '',
-      status: 'active',
-    });
-  };
-
-  const handleJobInputChange = (e) => {
-    const { name, value } = e.target;
-    setJobFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddJob = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/pages/career/job', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(jobFormData),
-      });
-      if (response.ok) {
-        await fetchJobs();
-        resetJobForm();
-        setShowAddForm(false);
-        fetchStats();
-      }
-    } catch (error) {
-      console.error('Error adding job:', error);
-      const newJob = { id: `new-${Date.now()}`, ...jobFormData };
-      setJobs((prev) => [...prev, newJob]);
-      resetJobForm();
-      setShowAddForm(false);
-    }
-  };
-
-  const handleEditJob = (job) => {
-    setEditingJob(job.id);
-    setJobFormData({
-      title: job.title,
-      category: job.category,
-      location: job.location,
-      type: job.type,
-      description: job.description,
-      status: job.status,
-    });
-    setShowAddForm(false);
-  };
-
-  const handleUpdateJob = async (job) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(jobFormData),
-        }
-      );
-      if (response.ok) {
-        await fetchJobs();
-        setEditingJob(null);
-        resetJobForm();
-      }
-    } catch (error) {
-      console.error('Error updating job:', error);
-      setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, ...jobFormData } : j)));
-      setEditingJob(null);
-      resetJobForm();
-    }
-  };
-
-  const handleDeleteJob = async (job) => {
-    if (!window.confirm('Are you sure you want to delete this job opening?')) return;
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/pages/career/job/${job.categoryIndex}/${job.jobIndex}`,
-        { method: 'DELETE' }
-      );
-      if (response.ok) {
-        await fetchJobs();
-        fetchStats();
-      }
-    } catch (error) {
-      console.error('Error deleting job:', error);
-      setJobs((prev) => prev.filter((j) => j.id !== job.id));
-    }
-  };
-
-  const handlePageSelect = (pageName) => {
-    setActiveSection('pages');
-    setActivePage(pageName);
-    setPageView('list');
-    setEditMode(false);
-    setPageData({ title: pageName, metaDescription: '', status: 'published' });
-  };
+  const resetJobForm = () => setJobFormData({ title: '', category: 'AI & Data Science', location: '', type: 'Full-Time', description: '', status: 'active' });
+  const handleJobInputChange = (e) => { const { name, value } = e.target; setJobFormData(prev => ({ ...prev, [name]: value })); };
+  const handlePageSelect = (pageName) => { setActiveSection('pages'); setActivePage(pageName); setPageView('list'); setEditMode(false); setPageData({ title: pageName, metaDescription: '', status: 'published' }); };
 
   // Breadcrumb component
   const Breadcrumb = () => {
     const getBreadcrumbs = () => {
       const crumbs = [{ label: 'Admin', action: () => navigate('/admin') }];
-
       if (activeSection === 'overview') {
         crumbs.push({ label: 'Overview', action: null });
       } else if (activeSection === 'pages' && activePage) {
@@ -456,35 +332,18 @@ export default function AdminDashboard() {
       } else if (activeSection === 'analytics') {
         crumbs.push({ label: 'Analytics', action: null });
       } else if (activeSection === 'manageexpense') {
-
-        // Companies
-        crumbs.push({
-          label: 'Customers',
-          action: () => {
-            navigate('/admin');
-            setCompaniesExpanded(true);
-          }
-        });
-
-        // Expense Management (clickable)
-        crumbs.push({
-          label: 'Expense Management',
-          action: () => navigate('/admin/expense-inquiries')
-        });
-
-        // Create Expense (current page)
-        crumbs.push({
-          label: 'Create Expense',
-          action: null
-        });
+        crumbs.push({ label: 'Customers', action: () => { navigate('/admin'); setCompaniesExpanded(true); } });
+        crumbs.push({ label: 'Expense Management', action: () => navigate('/admin/expense-inquiries') });
+        crumbs.push({ label: 'Create Expense', action: null });
       } else if (activeSection === 'settings') {
         crumbs.push({ label: 'Settings', action: null });
       } else if (activeSection === 'logs') {
         crumbs.push({ label: 'All Logs', action: null });
+      } else if (location.pathname.includes('expenseanalytics')) {
+        crumbs.push({ label: 'Legal Entities', action: () => navigate('/admin/legalentities') });
+        crumbs.push({ label: 'Expense Analytics', action: null });
       } else if (activeSection === 'legalentities') {
         crumbs.push({ label: 'Legal Entites', action: null });
-      } else if (activeSection === 'expenseanalytics') {
-        crumbs.push({ label: 'Expense Entites', action: null });
       } else if (activeSection === 'newcompany') {
         crumbs.push({ label: 'Customers', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Company Inquiries', action: null });
@@ -492,10 +351,7 @@ export default function AdminDashboard() {
         crumbs.push({ label: 'Customers', action: () => setCompaniesExpanded(true) });
         crumbs.push({ label: 'Expense Management', action: null });
       } else if (activeSection === 'masters') {
-        crumbs.push({
-          label: 'Masters',
-          action: activePage ? () => { navigate('/admin/mainmasters'); setActivePage(''); } : null,
-        });
+        crumbs.push({ label: 'Masters', action: activePage ? () => { navigate('/admin/mainmasters'); setActivePage(''); } : null });
         if (activePage === 'natureofbusiness') crumbs.push({ label: 'Nature of Business', action: null });
         else if (activePage === 'channel') crumbs.push({ label: 'Channel', action: null });
         else if (activePage === 'category') crumbs.push({ label: 'Category', action: null });
@@ -504,28 +360,19 @@ export default function AdminDashboard() {
         else if (activePage === 'country') crumbs.push({ label: 'Country', action: null });
         else if (activePage === 'currency') crumbs.push({ label: 'Currency', action: null });
       }
-
       return crumbs;
     };
 
     const breadcrumbs = getBreadcrumbs();
-
     return (
       <div className="flex items-center gap-2 text-xs text-slate-600 mb-4">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={index}>
             {index > 0 && <ChevronRight size={16} className="text-slate-400" />}
             {crumb.action ? (
-              <button
-                onClick={crumb.action}
-                className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                {crumb.label}
-              </button>
+              <button onClick={crumb.action} className="text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">{crumb.label}</button>
             ) : (
-              <span className={index === breadcrumbs.length - 1 ? 'text-slate-900 font-semibold' : 'text-slate-600'}>
-                {crumb.label}
-              </span>
+              <span className={index === breadcrumbs.length - 1 ? 'text-slate-900 font-semibold' : 'text-slate-600'}>{crumb.label}</span>
             )}
           </React.Fragment>
         ))}
@@ -538,7 +385,7 @@ export default function AdminDashboard() {
       className="group relative bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden animate-fade-in-up"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className={`absolute inset-0 bg-linear-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+      <div className={`absolute inset-0 bg-linear-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
       <div className="relative">
         <div className="flex items-start justify-between mb-6">
           <div className={`w-14 h-14 bg-linear-to-br ${color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300`}>
@@ -549,103 +396,181 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="space-y-1">
-          <h3 className={`text-4xl font-bold bg-linear-to-br ${color} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 origin-left`}>
-            {value}
-          </h3>
+          <h3 className={`text-4xl font-bold bg-linear-to-br ${color} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 origin-left`}>{value}</h3>
           <p className="text-sm font-medium text-slate-600">{label}</p>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
     </div>
   );
 
-  const OverviewContent = () => (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-4xl font-bold text-slate-900 mb-2 bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text">
-            Dashboard Overview
-          </h2>
-          <p className="text-slate-600 flex items-center gap-2">
-            <span>Welcome back! Here's what's happening with SubDuxion</span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              Live
-            </span>
-          </p>
-        </div>
-      </div>
+  const tk = { fontSize: 11, fill: "#94a3b8" };
 
-      {loading ? (
-        <div className="flex flex-col justify-center items-center py-24">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <div className="w-16 h-16 border-4 border-transparent border-t-purple-600 rounded-full animate-spin absolute inset-0" style={{ animationDirection: 'reverse', animationDuration: '1s' }}></div>
-          </div>
-          <p className="mt-6 text-slate-600 font-medium">Loading dashboard data...</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-            <StatCard icon={<Briefcase size={24} />} value={stats.openRoles} label="Open Roles" color="from-blue-500 to-blue-600" delay={0} />
-            <StatCard icon={<Wrench size={24} />} value={stats.services} label="Total Services" color="from-purple-500 to-purple-600" delay={100} />
-            <StatCard icon={<Building2 size={24} />} value={stats.useCases} label="Total Use Cases" color="from-orange-500 to-orange-600" delay={200} />
-            <StatCard icon={<LucidePhoneCall size={24} />} value={bookingCount} label="Call Bookings" color="from-green-500 to-green-600" delay={300} />
-            <StatCard icon={<Building2 size={24} />} value={stats.companiesCount ?? 0} label="Registered Companies" color="from-yellow-400 to-yellow-500" delay={300} />
-            <StatCard icon={<Users size={24} />} value={stats.jobAppsCount ?? 0} label="Job Applications" color="from-pink-500 to-pink-600" delay={400} />
-          </div>
+  const OverviewContent = () => {
+    /* pie data */
+    const contentPie = [
+      { name: "Services", value: stats.services, fill: PURPLE },
+      { name: "Use Cases", value: stats.useCases, fill: ORANGE },
+      { name: "Open Roles", value: stats.openRoles, fill: BLUE },
+    ];
+    const inquiryBar = [
+      { name: "Bookings", value: bookingCount, fill: BLUE },
+      { name: "Applications", value: stats.jobAppsCount ?? 0, fill: PURPLE },
+      { name: "Companies", value: stats.companiesCount ?? 0, fill: GREEN },
+    ];
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-            <div className="p-6 border-b border-slate-100 bg-linear-to-r from-slate-50 to-white">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">Recent Activity</h3>
-                <button
-                  onClick={() => navigate('/admin/all-logs')}
-                  className="text-sm cursor-pointer font-medium text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
-                >
-                  View All <ChevronRight size={16} />
-                </button>
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-4xl font-bold text-slate-900 mb-2 bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text">
+              Dashboard Overview
+            </h2>
+            <p className="text-slate-600 flex items-center gap-2">
+              <span>Welcome back! Here's what's happening with SubDuxion</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                Live
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col justify-center items-center py-24">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-16 h-16 border-4 border-transparent border-t-purple-600 rounded-full animate-spin absolute inset-0" style={{ animationDirection: 'reverse', animationDuration: '1s' }} />
+            </div>
+            <p className="mt-6 text-slate-600 font-medium">Loading dashboard data...</p>
+          </div>
+        ) : (
+          <>
+            {/* ── KPI Cards ── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <StatCard icon={<Briefcase size={24} />} value={stats.openRoles} label="Open Roles" color="from-blue-500 to-blue-600" delay={0} />
+              <StatCard icon={<Wrench size={24} />} value={stats.services} label="Total Services" color="from-purple-500 to-purple-600" delay={100} />
+              <StatCard icon={<Building2 size={24} />} value={stats.useCases} label="Total Use Cases" color="from-orange-500 to-orange-600" delay={200} />
+              <StatCard icon={<LucidePhoneCall size={24} />} value={bookingCount} label="Call Bookings" color="from-green-500 to-green-600" delay={300} />
+              <StatCard icon={<Building2 size={24} />} value={stats.companiesCount ?? 0} label="Registered Companies" color="from-yellow-400 to-yellow-500" delay={400} />
+              <StatCard icon={<Users size={24} />} value={stats.jobAppsCount ?? 0} label="Job Applications" color="from-pink-500 to-pink-600" delay={500} />
+            </div>
+
+            {/* ── Charts Row 1: Trend + Inquiry Bar ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+              {/* 6-month trend */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <TrendingUp size={15} style={{ color: BLUE }} />
+                  </div>
+                  <span className="text-sm font-700 text-slate-800 font-bold">6-Month Activity Trend</span>
+                </div>
+                <div className="p-4" style={{ height: 240 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trendData} margin={{ top: 4, right: 12, bottom: 0, left: -16 }}>
+                      <defs>
+                        <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={BLUE} stopOpacity={0.18} />
+                          <stop offset="95%" stopColor={BLUE} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={PURPLE} stopOpacity={0.18} />
+                          <stop offset="95%" stopColor={PURPLE} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="label" tick={tk} />
+                      <YAxis tick={tk} allowDecimals={false} />
+                      <Tooltip content={<ChartTT />} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                      <Area type="monotone" dataKey="bookings" name="Bookings" stroke={BLUE} strokeWidth={2} fill="url(#gB)" dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
+                      <Area type="monotone" dataKey="applications" name="Applications" stroke={PURPLE} strokeWidth={2} fill="url(#gA)" dot={{ r: 3, fill: PURPLE }} activeDot={{ r: 5 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Inquiry bar */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in-up" style={{ animationDelay: '350ms' }}>
+                <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <BarChart3 size={15} style={{ color: PURPLE }} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-800">Inquiry Totals</span>
+                </div>
+                <div className="p-4" style={{ height: 240 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={inquiryBar} margin={{ top: 4, right: 12, bottom: 0, left: -16 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="name" tick={tk} />
+                      <YAxis tick={tk} allowDecimals={false} />
+                      <Tooltip content={<ChartTT />} />
+                      <Bar dataKey="value" name="Count" radius={[6, 6, 0, 0]}>
+                        {inquiryBar.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
-            <div className="divide-y divide-slate-100">
-              {logs.map((log, index) => (
-                <div
-                  key={log._id}
-                  className="p-6 hover:bg-slate-50 transition-all duration-200 group animate-slide-in-left"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                      {index < logs.length - 1 && (
-                        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-0.5 h-12 bg-linear-to-b from-slate-200 to-transparent"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
-                        {log.message}
-                      </p>
-                      <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} />
-                          {new Date(log.createdAt).toLocaleString()}
-                        </span>
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-medium">
-                          {log.type}
-                        </span>
-                      </div>
-                    </div>
+
+            {/* ── Charts Row 2: Content Pie + Recent Logs ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+              {/* Content pie */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                  <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                    <Wrench size={15} style={{ color: ORANGE }} />
                   </div>
+                  <span className="text-sm font-bold text-slate-800">Content Distribution</span>
                 </div>
-              ))}
+                <div className="p-4" style={{ height: 240 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={contentPie} cx="50%" cy="45%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={4} stroke="none">
+                        {contentPie.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Pie>
+                      <Tooltip content={<ChartTT />} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Recent logs */}
+              <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '450ms' }}>
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
+                  <button onClick={() => navigate('/admin/all-logs')} className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1">
+                    View All <ChevronRight size={14} />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-50">
+                  {logs.map((log, index) => (
+                    <div key={log._id} className="px-5 py-3.5 hover:bg-slate-50 transition-colors flex items-start gap-3 animate-slide-in-left" style={{ animationDelay: `${index * 50}ms` }}>
+                      <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-800 truncate">{log.message}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                          <Clock size={11} />
+                          <span>{new Date(log.createdAt).toLocaleString()}</span>
+                          <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[10px] font-medium">{log.type}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-purple-50/30" onClick={() => setShowPageMenu(null)}>
@@ -682,13 +607,9 @@ export default function AdminDashboard() {
       />
 
       <div className="flex-1 overflow-auto">
-        <div className={` max-w-7xl mx-auto ${isCompanyPage ? "" : "p-3"}`}>
+        <div className={`max-w-7xl mx-auto ${isCompanyPage ? "" : "p-3"}`}>
           <Breadcrumb />
-          {activeSection === 'overview' ? (
-            <OverviewContent />
-          ) : (
-            <Outlet context={{ sidebarCollapsed }} />
-          )}
+          {activeSection === 'overview' ? <OverviewContent /> : <Outlet context={{ sidebarCollapsed }} />}
         </div>
       </div>
     </div>

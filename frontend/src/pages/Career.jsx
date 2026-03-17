@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MapPin, Clock } from "lucide-react";
+import ChatBot from "../components/Chatbot";
 
 const Career = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ const Career = () => {
   const sortedSections = getSortedSections();
 
   return (
+    <>
     <div className="font-dm-sans font-normal antialiased bg-[#f5f3ef] text-[#1a1a1a]">
       {sortedSections.map(({ id, type, data }) => {
 
@@ -248,6 +250,8 @@ const Career = () => {
         return null;
       })}
     </div>
+    <ChatBot />
+    </>
   );
 };
 

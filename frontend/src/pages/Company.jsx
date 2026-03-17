@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import ChatBot from "../components/Chatbot";
 
 const Company = () => {
   const [page, setPage] = useState(null);
@@ -50,6 +51,7 @@ const Company = () => {
   const sortedSections = getSortedSections();
 
   return (
+    <>
     <div className="w-full mt-20 bg-[#f5f3ef] text-[#1a1a1a]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {sortedSections.map(({ id, type, data }) => {
 
@@ -255,7 +257,9 @@ const Company = () => {
 
         return null;
       })}
+      <ChatBot />
     </div>
+  </>
   );
 };
 

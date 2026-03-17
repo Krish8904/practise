@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import ChatBot from "../components/Chatbot";
 
 const Usecases = () => {
   const [pageData, setPageData] = useState(null);
@@ -48,6 +49,7 @@ const Usecases = () => {
   const sortedSections = getSortedSections();
 
   return (
+    <>
     <div className="font-dm-sans font-normal antialiased bg-[#f5f3ef] text-[#1a1a1a] w-full mt-20">
       {sortedSections.map((section) => {
         const { id, type, data } = section;
@@ -213,7 +215,9 @@ const Usecases = () => {
 
         return null;
       })}
+      <ChatBot />
     </div>
+  </>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Clock, BarChart2, Map, CalendarCheck, CheckCircle2 } from "lucide-react";
+import ChatBot from "../../components/Chatbot";
 
 const Call = () => {
   const [name, setName] = useState("");
@@ -52,14 +53,13 @@ const Call = () => {
         </div>
       )}
 
-      <div className="w-full mt-20 bg-[#f5f3ef]">
+      <div className="w-full mt-20 bg-[#f5f3ef] font-poppins">
 
         {/* ── HERO ── */}
         <div className="max-w-7xl mx-auto px-12 pt-20 pb-0">
           <div className="grid grid-cols-[1.2fr_0.8fr] gap-10  items-end mb-22">
             <h1
               className="text-[clamp(3rem,5.5vw,5rem)] font-light leading-[1.05] tracking-[-0.03em] text-[#1a1a1a] m-0"
-              style={{ fontFamily: "'Georgia', serif" }}
             >
               Book a <em className="not-italic  text-[#4a7c59]">Consultation</em>
             </h1>
@@ -84,7 +84,6 @@ const Call = () => {
                 >
                   <span
                     className="text-xs text-[#bbb] font-light pt-0.5 shrink-0"
-                    style={{ fontFamily: "'Georgia', serif" }}
                   >
                     {step.n}
                   </span>
@@ -107,7 +106,6 @@ const Call = () => {
               <div className="flex items-end justify-between mb-10 pb-6 border-b border-[#d4d0c8]">
                 <h2
                   className="text-[clamp(1.8rem,3vw,2.4rem)] font-light tracking-[-0.02em] text-[#1a1a1a] m-0 leading-[1.1]"
-                  style={{ fontFamily: "'Georgia', serif" }}
                 >
                   What to <em className="not-italic text-[#4a7c59]">Expect</em>
                 </h2>
@@ -149,7 +147,6 @@ const Call = () => {
               <p className="text-xs text-[#4a7c59] font-medium tracking-widest uppercase mb-2">Schedule Your Call</p>
               <h3
                 className="text-2xl font-light tracking-[-0.02em] text-[#1a1a1a] mb-8"
-                style={{ fontFamily: "'Georgia', serif" }}
               >
                 Let's find a <em className="not-italic  text-[#4a7c59]">time</em> that works
               </h3>
@@ -271,6 +268,7 @@ const Call = () => {
           to   { transform: translateX(0);   opacity: 1; }
         }
       `}</style>
+      <ChatBot />
     </>
   );
 };

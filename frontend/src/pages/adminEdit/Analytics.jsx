@@ -3,31 +3,145 @@ import axios from "axios";
 import {
   PhoneCall, Users, Building2, Mail, Briefcase,
   Wrench, BarChart3, TrendingUp, RefreshCw,
-  CheckCircle, Clock, XCircle, AlertCircle,
 } from "lucide-react";
-import { Mosaic } from "react-loading-indicators";
-
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  RadialBarChart, RadialBar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const API = "http://localhost:5000";
 
+/* ── palette ── */
+const BLUE = "#3b82f6";
+const PURPLE = "#8b5cf6";
+const GREEN = "#10b981";
+const SLATE = "#64748b";
+const ORANGE = "#f97316";
+const PINK = "#ec4899";
+const TEAL = "#14b8a6";
+
+const STATUS_COLORS = {
+  pending: "#f59e0b",
+  confirmed: "#10b981",
+  cancelled: "#ef4444",
+  Screening: "#3b82f6",
+  "1st Round": "#8b5cf6",
+  "2nd Round": "#6366f1",
+  "Final Round": "#f97316",
+  Rejected: "#ef4444",
+  Hired: "#10b981",
+};
+
+/* ── custom tooltip ── */
+const ChartTT = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: "white", border: "1px solid #e2e8f0", borderRadius: 10,
+      padding: "10px 14px", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+      fontFamily: "'DM Sans', sans-serif", fontSize: 12,
+    }}>
+      {label && <p style={{ color: "#94a3b8", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: 10 }}>{label}</p>}
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: p.fill || p.stroke, display: "inline-block" }} />
+          <span style={{ color: "#475569" }}>{p.name}: </span>
+          <span style={{ fontWeight: 700, color: "#0f172a" }}>{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ── stat card ── */
+const StatCard = ({ icon: Icon, value, label, sub, color, delay = 0 }) => (
+  <div style={{
+    background: "white", borderRadius: 16, padding: "20px 22px",
+    border: "1px solid #f1f5f9", boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+    fontFamily: "'DM Sans', sans-serif", animation: `fadeUp 0.5s ease ${delay}ms both`,
+  }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon size={18} style={{ color }} />
+      </div>
+      <TrendingUp size={13} style={{ color: "#cbd5e1" }} />
+    </div>
+    <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{value}</div>
+    <div style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginTop: 4 }}>{label}</div>
+    {sub && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{sub}</div>}
+  </div>
+);
+
+/* ── section wrapper ── */
+const Section = ({ title, children, delay = 0 }) => (
+  <div style={{ animation: `fadeUp 0.5s ease ${delay}ms both` }}>
+    <p style={{
+      fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.12em",
+      textTransform: "uppercase", marginBottom: 12, fontFamily: "'DM Sans', sans-serif",
+    }}>{title}</p>
+    {children}
+  </div>
+);
+
+/* ── chart card ── */
+const ChartCard = ({ title, icon: Icon, color, children, height = 260 }) => (
+  <div style={{
+    background: "white", borderRadius: 16, border: "1px solid #f1f5f9",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.05)", overflow: "hidden",
+    fontFamily: "'DM Sans', sans-serif",
+  }}>
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      padding: "16px 20px", borderBottom: "1px solid #f8fafc",
+    }}>
+      {Icon && (
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon size={15} style={{ color }} />
+        </div>
+      )}
+      <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{title}</span>
+    </div>
+    <div style={{ padding: "16px 20px 20px", height }}>{children}</div>
+  </div>
+);
+
+/* ── recent row ── */
+const Row = ({ primary, secondary, badge, badgeColor, date }) => {
+  const fmt = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      padding: "10px 20px", borderBottom: "1px solid #f8fafc",
+      fontFamily: "'DM Sans', sans-serif",
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{primary}</div>
+        {secondary && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{secondary}</div>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        {date && <span style={{ fontSize: 11, color: "#94a3b8" }}>{fmt(date)}</span>}
+        {badge && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+            background: (badgeColor || "#64748b") + "18", color: badgeColor || "#64748b",
+            border: `1px solid ${(badgeColor || "#64748b")}30`, textTransform: "capitalize",
+          }}>{badge}</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 function Analytics() {
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState({
-    callBookings: 0,
-    applications: 0,
-    contactInquiries: 0,
-    companyRegistrations: 0,
-    openRoles: 0,
-    services: 0,
-    useCases: 0,
-    // breakdowns
-    bookingStatuses: {},
-    applicationStatuses: {},
-    recentBookings: [],
-    recentApplications: [],
-    recentContacts: [],
-    recentCompanies: [],
+    callBookings: 0, applications: 0, contactInquiries: 0,
+    companyRegistrations: 0, openRoles: 0, services: 0, useCases: 0,
+    bookingStatuses: {}, applicationStatuses: {},
+    recentBookings: [], recentApplications: [], recentContacts: [], recentCompanies: [],
+    monthlyBookings: [], monthlyApps: [],
   });
 
   const fetchAll = async () => {
@@ -47,7 +161,6 @@ function Analytics() {
       const companies = companiesRes.status === "fulfilled" ? companiesRes.value.data.data ?? [] : [];
       const pages = pagesRes.status === "fulfilled" ? pagesRes.value.data : [];
 
-      // Parse pages
       let services = 0, useCases = 0, openRoles = 0;
       pages.forEach((page) => {
         if (page.pageName === "services" && Array.isArray(page.sections?.services?.items))
@@ -60,334 +173,264 @@ function Analytics() {
         }
       });
 
-      // Booking status breakdown
       const bookingStatuses = bookings.reduce((acc, b) => {
-        const s = b.status || "pending";
-        acc[s] = (acc[s] || 0) + 1;
-        return acc;
+        const s = b.status || "Pending"; acc[s] = (acc[s] || 0) + 1; return acc;
       }, {});
 
-      // Application status breakdown
       const applicationStatuses = applications.reduce((acc, a) => {
-        const s = a.status || "Screening";
-        acc[s] = (acc[s] || 0) + 1;
-        return acc;
+        const s = a.status || "Screening"; acc[s] = (acc[s] || 0) + 1; return acc;
       }, {});
+
+      /* monthly trend — last 6 months */
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const now = new Date();
+      const last6 = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+        return { key: `${d.getFullYear()}-${d.getMonth()}`, label: monthNames[d.getMonth()], bookings: 0, applications: 0, contacts: 0 };
+      });
+
+      const toKey = (d) => { const dt = new Date(d); return `${dt.getFullYear()}-${dt.getMonth()}`; };
+      bookings.forEach(b => { const m = last6.find(x => x.key === toKey(b.createdAt)); if (m) m.bookings++; });
+      applications.forEach(a => { const m = last6.find(x => x.key === toKey(a.createdAt)); if (m) m.applications++; });
+      contacts.forEach(c => { const m = last6.find(x => x.key === toKey(c.createdAt)); if (m) m.contacts++; });
 
       setData({
-        callBookings: bookings.length,
-        applications: applications.length,
-        contactInquiries: contacts.length,
-        companyRegistrations: companies.length,
-        openRoles,
-        services,
-        useCases,
-        bookingStatuses,
-        applicationStatuses,
-        recentBookings: bookings.slice(0, 5),
-        recentApplications: applications.slice(0, 5),
-        recentContacts: contacts.slice(0, 5),
-        recentCompanies: companies.slice(0, 5),
+        callBookings: bookings.length, applications: applications.length,
+        contactInquiries: contacts.length, companyRegistrations: companies.length,
+        openRoles, services, useCases,
+        bookingStatuses, applicationStatuses,
+        recentBookings: bookings.slice(0, 5), recentApplications: applications.slice(0, 5),
+        recentContacts: contacts.slice(0, 5), recentCompanies: companies.slice(0, 5),
+        trend: last6,
       });
     } catch (err) {
-      console.error("Analytics fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => { fetchAll(); }, []);
 
-  const handleRefresh = () => { setRefreshing(true); fetchAll(); };
-
-  // ── helpers ────────────────────
-  const fmt = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
-
-  const statusColor = {
-    pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    confirmed: "bg-green-100 text-green-700 border-green-200",
-    cancelled: "bg-red-100 text-red-700 border-red-200",
-    Screening: "bg-blue-100 text-blue-700 border-blue-200",
-    "1st Round": "bg-purple-100 text-purple-700 border-purple-200",
-    "2nd Round": "bg-indigo-100 text-indigo-700 border-indigo-200",
-    "Final Round": "bg-orange-100 text-orange-700 border-orange-200",
-    Rejected: "bg-red-100 text-red-700 border-red-200",
-    Hired: "bg-green-100 text-green-700 border-green-200",
-  };
-
-  // ── sub-components ────────────────────────────────────────────────────
-  const BigStat = ({ icon: Icon, value, label, linear, sub }) => (
-    <div className={`group relative bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden animate-fade-in-up`}>
-      <div className={`absolute inset-0 bg-linear-to-br ${linear} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-      <div className="relative">
-        <div className="flex items-start justify-between mb-5">
-          <div className={`w-12 h-12 bg-linear-to-br ${linear} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
-            <Icon size={22} className="text-white" />
-          </div>
-          <TrendingUp size={16} className="text-slate-300 group-hover:text-green-400 transition-colors duration-300" />
-        </div>
-        <div className={`text-3xl font-bold bg-linear-to-br ${linear} bg-clip-text text-transparent mb-1`}>
-          {value}
-        </div>
-        <div className="text-sm font-semibold text-slate-600">{label}</div>
-        {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
+      <div style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: BLUE, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading analytics…</p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  const MiniStat = ({ icon: Icon, value, label, color, linear }) => (
-    <div className="group relative overflow-hidden flex items-center gap-3 transition-all duration-300 bg-white rounded-xl px-4 py-3 border shadow-sm hover:shadow-xl border-slate-100">
+  /* derived chart data */
+  const bookingPieData = Object.entries(data.bookingStatuses).map(([name, value]) => ({ name, value }));
+  const appPieData = Object.entries(data.applicationStatuses).map(([name, value]) => ({ name, value }));
+  const contentBarData = [
+    { name: "Services", value: data.services, fill: PURPLE },
+    { name: "Use Cases", value: data.useCases, fill: ORANGE },
+    { name: "Open Roles", value: data.openRoles, fill: BLUE },
+  ];
+  const inquiryBarData = [
+    { name: "Calls", value: data.callBookings, fill: BLUE },
+    { name: "Applications", value: data.applications, fill: PURPLE },
+    { name: "Contacts", value: data.contactInquiries, fill: SLATE },
+    { name: "Companies", value: data.companyRegistrations, fill: GREEN },
+  ];
 
-      <div className={`absolute inset-0 bg-linear-to-br ${linear} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-
-      <div className={`relative w-11 h-11 rounded-lg ${color} flex items-center justify-center shrink-0`}>
-        <Icon size={20} className="text-white" />
-      </div>
-
-      <div className="relative">
-        <div className="text-xl font-bold text-slate-800">{value}</div>
-        <div className="text-md text-slate-500">{label}</div>
-      </div>
-    </div>
-  );
-
-  const StatusBar = ({ label, count, total, color }) => {
-    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-600 font-medium capitalize">{label}</span>
-          <span className="text-slate-500">{count} <span className="text-slate-400">({pct}%)</span></span>
-        </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-    );
-  };
-
-  const SectionCard = ({ title, icon: Icon, iconColor, children }) => (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-linear-to-r from-slate-50 to-white">
-        <div className={`w-10 h-10 rounded-lg ${iconColor} flex items-center justify-center`}>
-          <Icon size={17} className="text-white" />
-        </div>
-        <h3 className="font-bold text-slate-800 text-md">{title}</h3>
-      </div>
-      <div className="divide-y divide-slate-50">{children}</div>
-    </div>
-  );
-
-  const Row = ({ primary, secondary, badge, badgeCls, date }) => (
-    <div className="flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50 transition-colors">
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-slate-800 truncate">{primary}</div>
-        {secondary && <div className="text-xs text-slate-400 mt-0.5 truncate">{secondary}</div>}
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {date && <span className="text-xs text-slate-400">{fmt(date)}</span>}
-        {badge && (
-          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border capitalize ${badgeCls || "bg-slate-100 text-slate-600 border-slate-200"}`}>
-            {badge}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-
-  const Empty = ({ text }) => (
-    <div className="px-6 py-8 text-center text-sm text-slate-400">{text}</div>
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-13 w-13 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 pl-1">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  const totalBookings = data.callBookings;
-  const totalApps = data.applications;
+  const tk = { fontSize: 11, fill: "#94a3b8", fontFamily: "'DM Sans', sans-serif" };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div style={{ fontFamily: "'DM Sans', sans-serif", maxWidth: 1300, paddingBottom: 60 }}>
 
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin   { to { transform: rotate(360deg); } }
+      `}</style>
+
+      {/* ── Header ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28, animation: "fadeUp 0.4s ease both" }}>
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-1">Analytics</h2>
-          <p className="text-slate-500 text-sm">
-            A snapshot of all activity across your platform
-            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-full border border-green-200">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>Analytics</h2>
+          <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
+            Platform-wide activity snapshot &nbsp;
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", background: "#f0fdf4", color: "#16a34a", fontSize: 11, borderRadius: 20, border: "1px solid #bbf7d0" }}>
+              <span style={{ width: 6, height: 6, background: "#22c55e", borderRadius: "50%", display: "inline-block", animation: "pulse 1.5s infinite" }} />
               Live
             </span>
           </p>
         </div>
-
-      </div>
-
-      {/* ── Content Stats (Services / Use Cases / Open Roles) ── */}
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-3">Content</p>
-        <div className="grid grid-cols-3 gap-4">
-          <MiniStat
-            icon={Wrench}
-            value={data.services}
-            label="Services"
-            color="bg-purple-500"
-            linear="from-purple-500 to-purple-600"
+        <button onClick={fetchAll} className="inline-flex items-center gap-1 p-[7px] bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 active:scale-90"
+        >
+          <RefreshCw size={13} className={`${loading ? "animate-spin" : ""}`}
           />
-          <MiniStat icon={BarChart3} value={data.useCases} label="Use Cases" color="bg-orange-500" linear="from-orange-500 to-orange-600" />
-          <MiniStat icon={Briefcase} value={data.openRoles} label="Open Roles" color="bg-blue-500" linear="from-blue-500 to-blue-600" />
-        </div>
+        </button>
       </div>
 
-      {/* ── Big Inquiry Stats ──────────────────────────────── */}
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-3">Inquiries & Submissions</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <BigStat icon={PhoneCall} value={data.callBookings} label="Call Bookings"
-            linear="from-blue-500 to-blue-600" sub="via Book a Call form" />
-          <BigStat icon={Users} value={data.applications} label="Job Applications" linear="from-purple-500 to-purple-600" sub="via Careers page" />
-          <BigStat icon={Mail} value={data.contactInquiries} label="Contact Inquiries" linear="from-slate-500 to-slate-700" sub="via Contact Us form" />
-          <BigStat icon={Building2} value={data.companyRegistrations} label="Company Registrations" linear="from-green-500 to-green-600" sub="via Company Registration" />
+      {/* ── KPI Cards ── */}
+      <Section title="Inquiries & Submissions" delay={50}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
+          <StatCard icon={PhoneCall} value={data.callBookings} label="Call Bookings" sub="via Book a Call" color={BLUE} delay={50} />
+          <StatCard icon={Users} value={data.applications} label="Job Applications" sub="via Careers page" color={PURPLE} delay={100} />
+          <StatCard icon={Mail} value={data.contactInquiries} label="Contact Inquiries" sub="via Contact Us" color={SLATE} delay={150} />
+          <StatCard icon={Building2} value={data.companyRegistrations} label="Company Registrations" sub="via Company form" color={GREEN} delay={200} />
         </div>
-      </div>
+      </Section>
 
-      {/* ── Status Breakdowns ─────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {/* Booking statuses */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
-              <PhoneCall size={17} className="text-white" />
-            </div>
-            <h3 className="font-bold text-slate-800 text-md">Call Booking Statuses</h3>
-          </div>
-          {totalBookings === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-4">No bookings yet</p>
-          ) : (
-            <div className="space-y-3">
-              {Object.entries(data.bookingStatuses).map(([status, count]) => (
-                <StatusBar
-                  key={status} label={status} count={count} total={totalBookings}
-                  color={status === "confirmed" ? "bg-green-400" : status === "cancelled" ? "bg-red-400" : "bg-yellow-400"}
-                />
-              ))}
-            </div>
-          )}
+      {/* ── Trend Chart ── */}
+      <Section title="6-Month Trend" delay={200}>
+        <div style={{ marginBottom: 28 }}>
+          <ChartCard title="Activity Over Time" icon={TrendingUp} color={BLUE} height={280}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data.trend} margin={{ top: 4, right: 16, bottom: 0, left: -10 }}>
+                <defs>
+                  <linearGradient id="gBook" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={BLUE} stopOpacity={0.18} />
+                    <stop offset="95%" stopColor={BLUE} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gApp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={PURPLE} stopOpacity={0.18} />
+                    <stop offset="95%" stopColor={PURPLE} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gCon" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={TEAL} stopOpacity={0.18} />
+                    <stop offset="95%" stopColor={TEAL} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="label" tick={tk} />
+                <YAxis tick={tk} allowDecimals={false} />
+                <Tooltip content={<ChartTT />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif" }} />
+                <Area type="monotone" dataKey="bookings" name="Bookings" stroke={BLUE} strokeWidth={2} fill="url(#gBook)" dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
+                <Area type="monotone" dataKey="applications" name="Applications" stroke={PURPLE} strokeWidth={2} fill="url(#gApp)" dot={{ r: 3, fill: PURPLE }} activeDot={{ r: 5 }} />
+                <Area type="monotone" dataKey="contacts" name="Contacts" stroke={TEAL} strokeWidth={2} fill="url(#gCon)" dot={{ r: 3, fill: TEAL }} activeDot={{ r: 5 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
+      </Section>
 
-        {/* Application statuses */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center">
-              <Users size={17} className="text-white" />
-            </div>
-            <h3 className="font-bold text-slate-800 text-md">Application Records</h3>
-          </div>
-          {totalApps === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-4">No applications yet</p>
-          ) : (
-            <div className="space-y-3">
-              {Object.entries(data.applicationStatuses).map(([status, count]) => (
-                <StatusBar
-                  key={status} label={status} count={count} total={totalApps}
-                  color={
-                    status === "Hired" ? "bg-green-400"
-                      : status === "Rejected" ? "bg-red-400"
-                        : status === "Final Round" ? "bg-orange-400"
-                          : status === "2nd Round" ? "bg-indigo-400"
-                            : status === "1st Round" ? "bg-purple-400"
-                              : "bg-blue-400"
-                  }
-                />
-              ))}
-            </div>
-          )}
+      {/* ── Bar Charts Row ── */}
+      <Section title="Breakdown" delay={300}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+
+          {/* Inquiry totals bar */}
+          <ChartCard title="Inquiry Totals" icon={BarChart3} color={BLUE} height={240}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={inquiryBarData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={tk} />
+                <YAxis tick={tk} allowDecimals={false} />
+                <Tooltip content={<ChartTT />} />
+                <Bar dataKey="value" name="Count" radius={[6, 6, 0, 0]}>
+                  {inquiryBarData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Content bar */}
+          <ChartCard title="Content Items" icon={Wrench} color={PURPLE} height={240}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={contentBarData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={tk} />
+                <YAxis tick={tk} allowDecimals={false} />
+                <Tooltip content={<ChartTT />} />
+                <Bar dataKey="value" name="Count" radius={[6, 6, 0, 0]}>
+                  {contentBarData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
-      </div>
+      </Section>
 
-      {/* ── Recent Activity Tables ─────────────────────────── */}
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-3">Recent Activity</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── Pie Charts Row ── */}
+      <Section title="Status Distribution" delay={350}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
 
-          {/* Recent Call Bookings */}
-          <SectionCard title="Recent Call Bookings" icon={PhoneCall} iconColor="bg-blue-500">
+          {/* Booking statuses pie */}
+          <ChartCard title="Call Booking Statuses" icon={PhoneCall} color={BLUE} height={240}>
+            {bookingPieData.length === 0
+              ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 13 }}>No data yet</div>
+              : <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={bookingPieData} cx="40%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3} stroke="none">
+                    {bookingPieData.map((entry, i) => <Cell key={i} fill={STATUS_COLORS[entry.name] || "#94a3b8"} />)}
+                  </Pie>
+                  <Tooltip content={<ChartTT />} />
+                  <Legend iconType="circle" iconSize={8} layout="vertical" align="right" verticalAlign="middle"
+                    wrapperStyle={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            }
+          </ChartCard>
+
+          {/* Application statuses pie */}
+          <ChartCard title="Application Statuses" icon={Users} color={PURPLE} height={240}>
+            {appPieData.length === 0
+              ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 13 }}>No data yet</div>
+              : <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={appPieData} cx="40%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3} stroke="none">
+                    {appPieData.map((entry, i) => <Cell key={i} fill={STATUS_COLORS[entry.name] || "#94a3b8"} />)}
+                  </Pie>
+                  <Tooltip content={<ChartTT />} />
+                  <Legend iconType="circle" iconSize={8} layout="vertical" align="right" verticalAlign="middle"
+                    wrapperStyle={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            }
+          </ChartCard>
+        </div>
+      </Section>
+
+      {/* ── Recent Activity ── */}
+      <Section title="Recent Activity" delay={400}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+          <ChartCard title="Recent Call Bookings" icon={PhoneCall} color={BLUE} height="auto">
             {data.recentBookings.length === 0
-              ? <Empty text="No call bookings yet" />
+              ? <div style={{ padding: "24px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No bookings yet</div>
               : data.recentBookings.map((b) => (
-                <Row key={b._id}
-                  primary={b.name}
-                  secondary={`${b.date} at ${b.time} · ${b.phone}`}
-                  badge={b.status}
-                  badgeCls={statusColor[b.status]}
-                  date={b.createdAt}
-                />
+                <Row key={b._id} primary={b.name} secondary={`${b.date} at ${b.time} · ${b.phone}`}
+                  badge={b.status} badgeColor={STATUS_COLORS[b.status]} date={b.createdAt} />
               ))
             }
-          </SectionCard>
+          </ChartCard>
 
-          {/* Recent Applications */}
-          <SectionCard title="Recent Job Applications" icon={Users} iconColor="bg-purple-500">
+          <ChartCard title="Recent Job Applications" icon={Users} color={PURPLE} height="auto">
             {data.recentApplications.length === 0
-              ? <Empty text="No applications yet" />
+              ? <div style={{ padding: "24px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No applications yet</div>
               : data.recentApplications.map((a) => (
-                <Row key={a._id}
-                  primary={`${a.firstName} ${a.lastName}`}
-                  secondary={a.email}
-                  badge={a.status}
-                  badgeCls={statusColor[a.status]}
-                  date={a.createdAt}
-                />
+                <Row key={a._id} primary={`${a.firstName} ${a.lastName}`} secondary={a.email}
+                  badge={a.status} badgeColor={STATUS_COLORS[a.status]} date={a.createdAt} />
               ))
             }
-          </SectionCard>
+          </ChartCard>
 
-          {/* Recent Contact Inquiries */}
-          <SectionCard title="Recent Contact Inquiries" icon={Mail} iconColor="bg-slate-500">
+          <ChartCard title="Recent Contact Inquiries" icon={Mail} color={SLATE} height="auto">
             {data.recentContacts.length === 0
-              ? <Empty text="No contact inquiries yet" />
+              ? <div style={{ padding: "24px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No inquiries yet</div>
               : data.recentContacts.map((c) => (
-                <Row key={c._id}
-                  primary={`${c.firstName} ${c.lastName}`}
-                  secondary={c.email}
-                  date={c.createdAt}
-                />
+                <Row key={c._id} primary={`${c.firstName} ${c.lastName}`} secondary={c.email} date={c.createdAt} />
               ))
             }
-          </SectionCard>
+          </ChartCard>
 
-          {/* Recent Company Registrations */}
-          <SectionCard title="Recent Company Registrations" icon={Building2} iconColor="bg-green-500">
+          <ChartCard title="Recent Company Registrations" icon={Building2} color={GREEN} height="auto">
             {data.recentCompanies.length === 0
-              ? <Empty text="No registrations yet" />
+              ? <div style={{ padding: "24px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No registrations yet</div>
               : data.recentCompanies.map((c) => (
-                <Row key={c._id}
-                  primary={c.companyName}
-                  secondary={`${c.companyEmail} · ${c.companyId || ""}`}
-                  date={c.createdAt}
-                />
+                <Row key={c._id} primary={c.companyName} secondary={`${c.companyEmail} · ${c.companyId || ""}`} date={c.createdAt} />
               ))
             }
-          </SectionCard>
-
+          </ChartCard>
         </div>
-      </div>
+      </Section>
 
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fade-in-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 0.4s ease-out; }
-        .animate-fade-in-up { animation: fade-in-up 0.5s ease-out both; }
-      `}</style>
     </div>
   );
 }

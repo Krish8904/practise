@@ -3,6 +3,7 @@ import axios from "axios";
 import Map from "../components/Map";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, Building2, Mail, ArrowUpRight, Zap, Handshake, Sparkles } from "lucide-react";
+import ChatBot from "../components/Chatbot";
 
 const Touch = () => {
   const navigate = useNavigate();
@@ -323,6 +324,7 @@ const Touch = () => {
           to   { transform: translateX(0);   opacity: 1; }
         }
       `}</style>
+      <ChatBot />
     </>
   );
 };

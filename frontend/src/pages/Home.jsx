@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ChatBot from "../components/Chatbot";
 
 export default function Home() {
   const [homeData, setHomeData] = useState({});
@@ -16,8 +17,12 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+
+  
   if (loading) return <p className="text-center mt-12">Loading homepage...</p>;
 
+  
+  
   const getAlignClass = (align) => {
     if (align === "center") return "text-center";
     if (align === "right") return "text-right";
@@ -34,6 +39,7 @@ export default function Home() {
     });
 
   return (
+    <>
     <div className="w-full mt-20 bg-[#f5f3ef] text-[#1a1a1a]" style={{ fontFamily: "'poppins', sans-serif" }}>
       {sortedSections.map((section) => {
         const { id, type } = section;
@@ -261,11 +267,15 @@ export default function Home() {
                 </a>
               </div>
             </div>
-          );
+          
+        );
+          
         }
 
         return null;
       })}
+      <ChatBot />
     </div>
+    </>
   );
 }

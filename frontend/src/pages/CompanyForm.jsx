@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Building2, Globe, User, ChevronDown, X } from "lucide-react";
+import ChatBot from "../components/Chatbot";
 
 const CompanyForm = ({ editData = null, onSuccess = null, onClose = null }) => {
   const isEditMode = !!editData;
@@ -480,8 +481,9 @@ const CompanyForm = ({ editData = null, onSuccess = null, onClose = null }) => {
 
       </div>
       <style>{`@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
+      <ChatBot />
     </>
   );
 };
-
+              
 export default CompanyForm;

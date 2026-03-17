@@ -73,7 +73,7 @@ const Sidebar = ({
       <div className="absolute inset-0 bg-linear-to-br from-blue-600/5 via-transparent to-purple-600/5 opacity-50"></div>
 
       {/* Header */}
-      <div className="relative p-6 border-b border-slate-700/50">
+      <div className="relative p-5 border-b border-slate-700/50 pt-3 pb-3">
         <div className="flex items-center justify-between mb-1">
           {!sidebarCollapsed && (
             <div className="animate-fade-in">
@@ -240,14 +240,6 @@ const Sidebar = ({
         />
         
         <NavItem
-          icon={<BarChart3 size={20} />}
-          label="Expense Analytics"
-          active={activeSection === 'expenseanalytics'}
-          collapsed={sidebarCollapsed}
-          onClick={() => navigate('/admin/expenseanalytics')}
-        />
-
-        <NavItem
           icon={<Briefcase size={20} />}
           label="Career Openings"
           active={activeSection === 'manage-jobs'}
@@ -271,7 +263,7 @@ const Sidebar = ({
       </nav>
 
       {/* User Profile */}
-      <div className="relative p-4 border-t border-slate-700/50">
+      <div className="relative  border-t border-slate-700/50">
         {!sidebarCollapsed ? (
           <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-700/50 transition-all duration-200 group">
             <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-semibold shadow-lg">
