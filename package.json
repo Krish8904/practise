@@ -17,6 +17,8 @@
     "react-loading-indicators": "^1.0.1",
     "recharts": "^2.15.3",
     "whatwg-fetch": "^3.6.20",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "vite": "^5.0.0"
+
   }
 }
