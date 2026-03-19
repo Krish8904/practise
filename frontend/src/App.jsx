@@ -23,7 +23,7 @@ import NewSectionEditor from "./pages/adminEdit/NewSectionEditor";
 import ManageJobs from "./components/ManageJobs";
 import Logs from "./components/Logs";
 import ImageManager from "./pages/adminEdit/ImageManager";
-import CallInquiries from "./inquiries/Callinquiries";
+import CallInquiries from "./inquiries/CallInquiries";
 import ContactInquiries from "./inquiries/ContactInquiries";
 import JobInquiries from "./inquiries/JobInquiries";
 import Apply from "./pages/Apply";

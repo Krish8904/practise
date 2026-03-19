@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Outlet } from "react-router-dom";
 import axios from 'axios';
-import CallInquiries from '../inquiries/Callinquiries';
+import CallInquiries from '../inquiries/CallInquiries';
 import ContactInquiries from '../inquiries/ContactInquiries';
 import JobInquiries from '../inquiries/JobInquiries';
 import EditCareer from './adminEdit/EditCareer';
