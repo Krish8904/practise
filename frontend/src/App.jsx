@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import Lenis from "lenis";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import DynamicPage from "./components/DynamicPage";
@@ -53,38 +52,11 @@ import ExpenseAnalytics from "./components/ExpenseAnalytics";
 function App() {
   const location = useLocation();
 
-  // Routes where we hide Header/Footer
   const hideHeaderFooterRoutes = ["/admin", "/adminlogin"];
 
   const hideHeaderFooter = hideHeaderFooterRoutes.some((route) =>
     location.pathname.startsWith(route)
   );
-
-  useEffect(() => {
-    if (hideHeaderFooter) return;
-
-    const lenis = new Lenis({
-      duration: 1.2,
-      smoothWheel: true,
-      prevent: (node) => {
-        return !!(
-          node.closest?.('[class*="bp"]') ||
-          node.closest?.('[id*="bp"]') ||
-          node.closest?.('[class*="botpress"]') ||
-          node.closest?.('[id*="botpress"]')
-        );
-      },
-    });
-
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    return () => lenis.destroy();
-  }, [hideHeaderFooter]);
 
   return (
     <>
