@@ -66,13 +66,14 @@ function App() {
     const lenis = new Lenis({
       duration: 1.2,
       smoothWheel: true,
-      // ✅ Don't intercept scroll events inside the Botpress widget
       prevent: (node) => {
-        return (
-          node.id === "bp-web-widget-container" ||
-          node.id === "botpress-webchat" ||
-          node.closest?.("#bp-web-widget-container") !== null ||
-          node.closest?.("#botpress-webchat") !== null
+        return !!(
+          node.closest?.("#bp-web-widget-container") ||
+          node.closest?.("#botpress-webchat") ||
+          node.closest?.('[id*="botpress"]') ||
+          node.closest?.('[class*="botpress"]') ||
+          node.closest?.('[id*="bp-"]') ||
+          node.closest?.('[class*="bp-"]')
         );
       },
     });
